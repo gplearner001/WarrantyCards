@@ -16,6 +16,21 @@ export type Warranty = {
   createdAt: string;
 };
 
+// API response type
+interface APIWarranty {
+  warranty_id: string;
+  product_name: string;
+  company_name: string;
+  purchase_date: string;
+  expiry_date: string | null;
+  additional_info: string | null;
+  receipt_image_url: string | null;
+  product_image_url: string | null;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+}
+
 type WarrantyState = {
   warranties: Warranty[];
   isLoading: boolean;
@@ -43,15 +58,23 @@ const storage = {
   },
 };
 
-// Initialize with empty array to prevent undefined errors
-const initialState = {
-  warranties: [],
-  isLoading: false,
-  error: null
-};
+// Function to map API warranty to frontend warranty
+const mapAPIWarrantyToWarranty = (apiWarranty: APIWarranty): Warranty => ({
+  id: apiWarranty.warranty_id,
+  productName: apiWarranty.product_name,
+  company: apiWarranty.company_name,
+  purchaseDate: apiWarranty.purchase_date,
+  expiryDate: apiWarranty.expiry_date || undefined,
+  additionalInfo: apiWarranty.additional_info || undefined,
+  receiptImage: apiWarranty.receipt_image_url || undefined,
+  productImage: apiWarranty.product_image_url || undefined,
+  createdAt: apiWarranty.created_at,
+});
 
 export const useWarrantyStore = create<WarrantyState>((set, get) => ({
-  ...initialState,
+  warranties: [], // Initialize with empty array
+  isLoading: false,
+  error: null,
 
   clearError: () => set({ error: null }),
 
@@ -59,19 +82,25 @@ export const useWarrantyStore = create<WarrantyState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await warrantyApi.getAll();
-      // Ensure we always set an array, even if empty
-      const warranties = response?.warranties || [];
-      set({ warranties, isLoading: false });
+      
+      if (!Array.isArray(response)) {
+        throw new Error('Invalid response format from API');
+      }
+      
+      // Map API warranties to frontend warranty format
+      const mappedWarranties = response.map(mapAPIWarrantyToWarranty);
+      
+      set({ warranties: mappedWarranties, isLoading: false });
       
       if (Platform.OS !== 'web') {
-        await checkAndScheduleWarrantyNotifications(warranties);
+        await checkAndScheduleWarrantyNotifications(mappedWarranties);
       }
     } catch (error: any) {
       console.error('Error fetching warranties:', error);
       set({ 
         isLoading: false, 
         error: error.message || 'Failed to fetch warranties',
-        warranties: [] // Ensure we have an empty array on error
+        warranties: [] // Ensure warranties is always an array
       });
     }
   },
@@ -87,8 +116,8 @@ export const useWarrantyStore = create<WarrantyState>((set, get) => ({
       });
 
       const response = await warrantyApi.create(formData);
-      const currentWarranties = get().warranties || []; // Ensure we have an array
-      const updatedWarranties = [...currentWarranties, response.warranty];
+      const currentWarranties = get().warranties;
+      const updatedWarranties = [...currentWarranties, warranty];
       
       set({ warranties: updatedWarranties, isLoading: false });
       
@@ -108,7 +137,15 @@ export const useWarrantyStore = create<WarrantyState>((set, get) => ({
   updateWarranty: async (id: string, updatedFields: Partial<Warranty>) => {
     set({ isLoading: true, error: null });
     try {
-      const currentWarranties = get().warranties || []; // Ensure we have an array
+      const formData = new FormData();
+      Object.entries(updatedFields).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          formData.append(key, value);
+        }
+      });
+
+      await warrantyApi.update(id, formData);
+      const currentWarranties = get().warranties;
       const updatedWarranties = currentWarranties.map(warranty => 
         warranty.id === id ? { ...warranty, ...updatedFields } : warranty
       );
@@ -131,7 +168,8 @@ export const useWarrantyStore = create<WarrantyState>((set, get) => ({
   deleteWarranty: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
-      const currentWarranties = get().warranties || []; // Ensure we have an array
+      await warrantyApi.delete(id);
+      const currentWarranties = get().warranties;
       const updatedWarranties = currentWarranties.filter(warranty => warranty.id !== id);
       
       set({ warranties: updatedWarranties, isLoading: false });

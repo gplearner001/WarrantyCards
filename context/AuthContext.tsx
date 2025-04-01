@@ -63,19 +63,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userDataStr = await storage.getItem('userData');
         const subscriptionStatus = await storage.getItem('subscriptionStatus');
         
-        setIsAuthenticated(!!token);
-        setIsSubscribed(subscriptionStatus === 'active');
-        if (userDataStr) {
-          try {
-            const userData = JSON.parse(userDataStr);
-            setUser(userData);
-          } catch (e) {
-            console.error('Error parsing user data:', e);
-            setUser(null);
-          }
+        if (token && userDataStr) {
+          setIsAuthenticated(true);
+          setUser(JSON.parse(userDataStr));
+        } else {
+          setIsAuthenticated(false);
+          setUser(null);
         }
+        
+        setIsSubscribed(subscriptionStatus === 'active');
       } catch (error) {
         console.error('Error checking login status:', error);
+        setIsAuthenticated(false);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -89,22 +89,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       const response = await authApi.signIn({ email, password });
       
-      // Ensure token is a string
-      if (typeof response.access_token !== 'string') {
-        throw new Error('Invalid token format received');
-      }
-      
-      await storage.setItem('accessToken', response.access_token);
-      
-      // Stringify user data before storing
-      const userDataString = JSON.stringify(response.user);
-      await storage.setItem('userData', userDataString);
+      await storage.setItem('accessToken', response.token);
+      await storage.setItem('userData', JSON.stringify(response.user));
       
       setUser(response.user);
       setIsAuthenticated(true);
     } catch (error) {
       console.error('Login error:', error);
-      throw error;
+      throw new Error('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -113,11 +105,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (name: string, email: string, password: string) => {
     try {
       setIsLoading(true);
-      await authApi.signUp({ name, email, password, confirmPassword: password });
-      await login(email, password);
+      const response = await authApi.signUp({ name, email, password });
+      
+      await storage.setItem('accessToken', response.token);
+      await storage.setItem('userData', JSON.stringify(response.user));
+      
+      setUser(response.user);
+      setIsAuthenticated(true);
     } catch (error) {
       console.error('Registration error:', error);
-      throw error;
+      throw new Error('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -126,15 +123,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       setIsLoading(true);
-      await storage.removeItem('accessToken');
-      await storage.removeItem('userData');
-      await storage.removeItem('subscriptionStatus');
+      await authApi.signOut();
       setIsAuthenticated(false);
       setUser(null);
       setIsSubscribed(false);
     } catch (error) {
       console.error('Logout error:', error);
-      throw error;
+      throw new Error('Failed to logout. Please try again.');
     } finally {
       setIsLoading(false);
     }

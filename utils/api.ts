@@ -1,218 +1,215 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import NetInfo from '@react-native-community/netinfo';
-import axiosRetry from 'axios-retry';
+import { Warranty } from '../store/warrantyStore';
 
-// Get the API URL directly from process.env
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+// Get the API URL from environment variables
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
-if (!BASE_URL) {
-  throw new Error('EXPO_PUBLIC_API_URL environment variable is not set');
+// Types for API responses
+interface AuthResponse {
+  token: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
-let isRefreshing = false;
-let failedQueue: any[] = [];
+interface WarrantyResponse {
+  warrantyId: string;
+  message: string;
+}
 
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach(prom => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
+interface WarrantiesResponse {
+  warranties: Warranty[];
+}
+
+// Storage implementation
+const storage = {
+  getItem: async (key: string): Promise<string | null> => {
+    if (Platform.OS === 'web') {
+      return localStorage.getItem(key);
     }
-  });
-  failedQueue = [];
+    return SecureStore.getItemAsync(key);
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    if (Platform.OS === 'web') {
+      localStorage.setItem(key, value);
+      return;
+    }
+    return SecureStore.setItemAsync(key, value);
+  },
+  removeItem: async (key: string): Promise<void> => {
+    if (Platform.OS === 'web') {
+      localStorage.removeItem(key);
+      return;
+    }
+    return SecureStore.deleteItemAsync(key);
+  }
 };
 
-const api = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 60000,
-});
-
-axiosRetry(api, { 
-  retries: 3,
-  retryDelay: (retryCount) => {
-    return Math.min(1000 * Math.pow(2, retryCount), 10000);
-  },
-  retryCondition: (error) => {
-    return !!(
-      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-      error.code === 'ECONNABORTED' ||
-      (error.response && error.response.status >= 500 && error.response.status <= 599)
-    );
-  }
-});
-
-const checkNetworkConnectivity = async () => {
-  try {
-    if (Platform.OS === 'web') {
-      if (!navigator.onLine) return false;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      try {
-        await fetch(`${BASE_URL}/health`, { 
-          method: 'HEAD',
-          mode: 'no-cors',
-          signal: controller.signal
+// Logger utility
+const logger = {
+  request: (method: string, url: string, headers: HeadersInit, body?: any) => {
+    console.group(`🚀 API Request: ${method} ${url}`);
+    console.log('Headers:', headers);
+    if (body) {
+      console.log('Body:', body instanceof FormData ? 'FormData' : body);
+      if (body instanceof FormData) {
+        // Log FormData entries safely
+        const formDataEntries: { [key: string]: any } = {};
+        body.forEach((value, key) => {
+          formDataEntries[key] = value;
         });
-        clearTimeout(timeoutId);
-        return true;
-      } catch (e) {
-        return false;
+        console.log('FormData entries:', formDataEntries);
       }
-    } else {
-      console.log(BASE_URL);
-      const state = await NetInfo.fetch();
-      return state.isConnected && state.isInternetReachable;
     }
+    console.groupEnd();
+  },
+  response: (method: string, url: string, status: number, data: any) => {
+    console.group(`✅ API Response: ${method} ${url}`);
+    console.log('Status:', status);
+    console.log('Data:', data);
+    console.groupEnd();
+  },
+  error: (method: string, url: string, error: any) => {
+    console.group(`❌ API Error: ${method} ${url}`);
+    console.error('Error:', error);
+    console.groupEnd();
+  }
+};
+
+// API client implementation
+async function apiRequest<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const url = `${BASE_URL}${endpoint}`;
+  const method = options.method || 'GET';
+
+  try {
+    const token = await storage.getItem('accessToken');
+    const userDataStr = await storage.getItem('userData');
+    const userData = userDataStr ? JSON.parse(userDataStr) : null;
+    
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(userData?.id && { 'X-User-ID': userData.id }), // Add userId to headers
+      ...options.headers
+    };
+
+    // Log request
+    logger.request(method, url, headers, options.body);
+
+    const response = await fetch(url, {
+      ...options,
+      headers
+    });
+
+    const data = await response.json();
+
+    // Log response
+    logger.response(method, url, response.status, data);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Handle unauthorized access
+        await storage.removeItem('accessToken');
+        await storage.removeItem('userData');
+        throw new Error('Authentication required');
+      }
+
+      throw new Error(data.error || 'API request failed');
+    }
+
+    return data;
   } catch (error) {
-    console.error('Error checking network connectivity:', error);
-    return false;
+    // Log error
+    logger.error(method, url, error);
+    throw error;
   }
-};
+}
 
-api.interceptors.request.use(async (config) => {
-  const isConnected = await checkNetworkConnectivity();
-  if (!isConnected) {
-    throw new Error('No internet connection. Please check your network settings.');
-  }
-
-  const token = Platform.OS === 'web' 
-    ? localStorage.getItem('accessToken')
-    : await SecureStore.getItemAsync('accessToken');
-    
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    if (!error.response) {
-      const isConnected = await checkNetworkConnectivity();
-      if (!isConnected) {
-        return Promise.reject(new Error('No internet connection. Please check your network settings.'));
-      }
-      return Promise.reject(new Error('Unable to reach the server. Please try again later.'));
-    }
-
-    if (error.response.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then(token => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return api(originalRequest);
-          })
-          .catch(err => Promise.reject(err));
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        const response = await api.post('/auth/refresh');
-        const newToken = response.data.access_token;
-        
-        if (Platform.OS === 'web') {
-          localStorage.setItem('accessToken', newToken);
-        } else {
-          await SecureStore.setItemAsync('accessToken', newToken);
-        }
-        
-        api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        
-        processQueue(null, newToken);
-        return api(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        if (Platform.OS === 'web') {
-          localStorage.removeItem('accessToken');
-        } else {
-          await SecureStore.deleteItemAsync('accessToken');
-        }
-        return Promise.reject(new Error('Your session has expired. Please login again.'));
-      } finally {
-        isRefreshing = false;
-      }
-    }
-
-    return Promise.reject(error.response.data?.message || error.message);
-  }
-);
-
+// Auth API
 export const authApi = {
-  signUp: async (data: { name: string; email: string; password: string; confirmPassword: string }) => {
-    const response = await api.post('/auth/signup', data);
-    return response.data;
+  async signUp(data: { name: string; email: string; password: string }): Promise<AuthResponse> {
+    return apiRequest('/api/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
   },
 
-  signIn: async (data: { email: string; password: string }) => {
-    const response = await api.post('/auth/signin', data);
-    const { access_token, user } = response.data;
+  async signIn(data: { email: string; password: string }): Promise<AuthResponse> {
+    const response = await apiRequest<AuthResponse>('/api/auth/signin', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
     
-    if (Platform.OS === 'web') {
-      localStorage.setItem('accessToken', access_token);
-    } else {
-      await SecureStore.setItemAsync('accessToken', access_token);
+    // Store user data after successful login
+    if (response.user) {
+      await storage.setItem('userData', JSON.stringify(response.user));
     }
     
-    return response.data;
+    return response;
   },
 
-  signOut: async () => {
-    const response = await api.post('/auth/signout');
-    if (Platform.OS === 'web') {
-      localStorage.removeItem('accessToken');
-    } else {
-      await SecureStore.deleteItemAsync('accessToken');
+  async signOut(): Promise<void> {
+    const token = await storage.getItem('accessToken');
+    if (token) {
+      await apiRequest('/api/auth/signout', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
     }
-    return response.data;
+    await storage.removeItem('accessToken');
+    await storage.removeItem('userData');
   }
 };
 
+// Warranty API
 export const warrantyApi = {
-  create: async (data: FormData) => {
-    const response = await api.post('/warranties', data, {
+  async create(data: FormData): Promise<WarrantyResponse> {
+    const token = await storage.getItem('accessToken');
+    if (!token) throw new Error('Authentication required');
+
+    return apiRequest('/api/warranty', {
+      method: 'POST',
       headers: {
-        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`,
+        // Don't set Content-Type for FormData, browser will set it automatically with boundary
       },
+      body: data
     });
-    return response.data;
   },
 
-  getAll: async () => {
-    const response = await api.get('/warranties');
-    return response.data;
+  async getAll(): Promise<WarrantiesResponse> {
+    return apiRequest('/api/warranty');
   },
 
-  getById: async (id: string) => {
-    const response = await api.get(`/warranties/${id}`);
-    return response.data;
+  async getById(warrantyId: string): Promise<Warranty> {
+    return apiRequest(`/api/warranty?warrantyId=${warrantyId}`);
   },
 
-  update: async (id: string, data: FormData) => {
-    const response = await api.put(`/warranties/${id}`, data, {
+  async update(warrantyId: string, data: FormData): Promise<WarrantyResponse> {
+    const token = await storage.getItem('accessToken');
+    if (!token) throw new Error('Authentication required');
+
+    return apiRequest(`/api/warranty/${warrantyId}`, {
+      method: 'PUT',
       headers: {
-        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`,
       },
+      body: data
     });
-    return response.data;
   },
 
-  delete: async (id: string) => {
-    const response = await api.delete(`/warranties/${id}`);
-    return response.data;
+  async delete(warrantyId: string): Promise<void> {
+    return apiRequest(`/api/warranty/${warrantyId}`, {
+      method: 'DELETE'
+    });
   }
 };
