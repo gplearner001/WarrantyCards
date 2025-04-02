@@ -16,7 +16,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { logout, isSubscribed, toggleSubscription } = useAuth();
+  const { logout, isSubscribed, toggleSubscription, user } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
 
   const handleLogout = async () => {
@@ -81,8 +81,8 @@ export default function ProfileScreen() {
             <User size={40} color="#4361ee" />
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>John Doe</Text>
-            <Text style={styles.profileEmail}>john.doe@example.com</Text>
+            <Text style={styles.profileName}>{user?.name || 'Guest User'}</Text>
+            <Text style={styles.profileEmail}>{user?.email || 'guest@example.com'}</Text>
           </View>
         </Animated.View>
 

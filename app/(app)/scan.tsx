@@ -19,19 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useWarrantyStore } from '../../store/warrantyStore';
 import Animated, { FadeIn, FadeInUp, FadeOut } from 'react-native-reanimated';
-import {
-  Camera as CameraIcon,
-  Image as ImageIcon,
-  QrCode,
-  X,
-  Check,
-  ArrowLeft,
-  Calendar,
-  Building2,
-  ShoppingBag,
-  Clock,
-  Info,
-} from 'lucide-react-native';
+import { Camera as CameraIcon, Image as ImageIcon, QrCode, X, Check, ArrowLeft, Calendar, Building2, ShoppingBag, Clock, Info, Loader as Loader2 } from 'lucide-react-native';
 import { performOcr, ExtractedWarrantyData } from '../../utils/ocrUtils';
 
 export default function ScanScreen() {
@@ -45,6 +33,7 @@ export default function ScanScreen() {
   const [scanMode, setScanMode] = useState<'receipt' | 'product' | 'qr'>('receipt');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [productImage, setProductImage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Form data
   const [productName, setProductName] = useState('');
@@ -137,10 +126,7 @@ export default function ScanScreen() {
   };
 
   const processReceiptImage = async (imageUri: string) => {
-    setIsProcessing(false);
-
-    //For future Development
-    /*
+    setIsProcessing(true);
     try {
       const extractedData = await performOcr(imageUri);
       console.log("OCR extracted data:", extractedData);
@@ -160,7 +146,7 @@ export default function ScanScreen() {
       Alert.alert('OCR Error', 'Failed to extract text from the image. Please enter details manually.');
     } finally {
       setIsProcessing(false);
-    }*/
+    }
   };
 
   const saveWarranty = async () => {
@@ -170,6 +156,7 @@ export default function ScanScreen() {
     }
     
     try {
+      setIsSaving(true);
       const newWarranty = {
         id: Date.now().toString(),
         productName,
@@ -189,6 +176,8 @@ export default function ScanScreen() {
     } catch (error) {
       console.error('Error saving warranty:', error);
       Alert.alert('Error', 'Failed to save warranty. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -471,13 +460,27 @@ export default function ScanScreen() {
               </Animated.View>
 
               <Animated.View entering={FadeInUp.duration(800).delay(500)} style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.resetButton} onPress={resetForm}>
+                <TouchableOpacity 
+                  style={styles.resetButton} 
+                  onPress={resetForm}
+                  disabled={isSaving}
+                >
                   <X size={20} color="#dc3545" />
                   <Text style={styles.resetButtonText}>Reset</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.saveButton} onPress={saveWarranty}>
-                  <Check size={20} color="#ffffff" />
-                  <Text style={styles.saveButtonText}>Save Warranty</Text>
+                <TouchableOpacity 
+                  style={styles.saveButton} 
+                  onPress={saveWarranty}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <Loader2 size={20} color="#ffffff" style={{ marginRight: 8 }} />
+                  ) : (
+                    <Check size={20} color="#ffffff" />
+                  )}
+                  <Text style={styles.saveButtonText}>
+                    {isSaving ? 'Saving...' : 'Save Warranty'}
+                  </Text>
                 </TouchableOpacity>
               </Animated.View>
             </>
