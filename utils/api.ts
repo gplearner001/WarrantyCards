@@ -55,15 +55,7 @@ const logger = {
     console.group(`🚀 API Request: ${method} ${url}`);
     console.log('Headers:', headers);
     if (body) {
-      console.log('Body:', body instanceof FormData ? 'FormData' : body);
-      if (body instanceof FormData) {
-        // Log FormData entries safely
-        const formDataEntries: { [key: string]: any } = {};
-        body.forEach((value, key) => {
-          formDataEntries[key] = value;
-        });
-        console.log('FormData entries:', formDataEntries);
-      }
+      console.log('Body:', body);
     }
     console.groupEnd();
   },
@@ -96,7 +88,7 @@ async function apiRequest<T>(
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
-      ...(userData?.id && { 'X-User-ID': userData.id }), // Add userId to headers
+      ...(userData?.id && { 'X-User-ID': userData.id }),
       ...options.headers
     };
 
@@ -172,17 +164,10 @@ export const authApi = {
 
 // Warranty API
 export const warrantyApi = {
-  async create(data: FormData): Promise<WarrantyResponse> {
-    const token = await storage.getItem('accessToken');
-    if (!token) throw new Error('Authentication required');
-
+  async create(data: any): Promise<WarrantyResponse> {
     return apiRequest('/api/warranty', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // Don't set Content-Type for FormData, browser will set it automatically with boundary
-      },
-      body: data
+      body: JSON.stringify(data)
     });
   },
 
@@ -194,16 +179,10 @@ export const warrantyApi = {
     return apiRequest(`/api/warranty?warrantyId=${warrantyId}`);
   },
 
-  async update(warrantyId: string, data: FormData): Promise<WarrantyResponse> {
-    const token = await storage.getItem('accessToken');
-    if (!token) throw new Error('Authentication required');
-
+  async update(warrantyId: string, data: any): Promise<WarrantyResponse> {
     return apiRequest(`/api/warranty/${warrantyId}`, {
       method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: data
+      body: JSON.stringify(data)
     });
   },
 

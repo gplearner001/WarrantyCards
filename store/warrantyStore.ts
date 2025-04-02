@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import * as FileSystem from 'expo-file-system';
 import { checkAndScheduleWarrantyNotifications } from '../utils/notificationUtils';
 import { warrantyApi } from '../utils/api';
 
@@ -16,7 +17,6 @@ export type Warranty = {
   createdAt: string;
 };
 
-// API response type
 interface APIWarranty {
   warranty_id: string;
   product_name: string;
@@ -58,7 +58,6 @@ const storage = {
   },
 };
 
-// Function to map API warranty to frontend warranty
 const mapAPIWarrantyToWarranty = (apiWarranty: APIWarranty): Warranty => ({
   id: apiWarranty.warranty_id,
   productName: apiWarranty.product_name,
@@ -71,8 +70,23 @@ const mapAPIWarrantyToWarranty = (apiWarranty: APIWarranty): Warranty => ({
   createdAt: apiWarranty.created_at,
 });
 
+// Helper function to convert file URI to base64
+const convertImageToBase64 = async (uri: string): Promise<string> => {
+  try {
+    // Remove the file:// prefix for iOS
+    const fileUri = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
+    const base64 = await FileSystem.readAsStringAsync(fileUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    return `data:image/jpeg;base64,${base64}`;
+  } catch (error) {
+    console.error('Error converting image to base64:', error);
+    throw error;
+  }
+};
+
 export const useWarrantyStore = create<WarrantyState>((set, get) => ({
-  warranties: [], // Initialize with empty array
+  warranties: [],
   isLoading: false,
   error: null,
 
@@ -87,7 +101,6 @@ export const useWarrantyStore = create<WarrantyState>((set, get) => ({
         throw new Error('Invalid response format from API');
       }
       
-      // Map API warranties to frontend warranty format
       const mappedWarranties = response.map(mapAPIWarrantyToWarranty);
       
       set({ warranties: mappedWarranties, isLoading: false });
@@ -100,7 +113,7 @@ export const useWarrantyStore = create<WarrantyState>((set, get) => ({
       set({ 
         isLoading: false, 
         error: error.message || 'Failed to fetch warranties',
-        warranties: [] // Ensure warranties is always an array
+        warranties: []
       });
     }
   },
@@ -108,14 +121,29 @@ export const useWarrantyStore = create<WarrantyState>((set, get) => ({
   addWarranty: async (warranty: Warranty) => {
     set({ isLoading: true, error: null });
     try {
-      const formData = new FormData();
-      Object.entries(warranty).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
-          formData.append(key, value);
-        }
-      });
+      // Convert images to base64 if they exist
+      let receiptImageBase64: string | undefined;
+      let productImageBase64: string | undefined;
 
-      const response = await warrantyApi.create(formData);
+      if (warranty.receiptImage) {
+        receiptImageBase64 = await convertImageToBase64(warranty.receiptImage);
+      }
+      if (warranty.productImage) {
+        productImageBase64 = await convertImageToBase64(warranty.productImage);
+      }
+
+      // Create the request payload
+      const payload = {
+        productName: warranty.productName,
+        companyName: warranty.company,
+        purchaseDate: warranty.purchaseDate,
+        expiryDate: warranty.expiryDate,
+        additionalInfo: warranty.additionalInfo,
+        receiptImage: receiptImageBase64,
+        productImage: productImageBase64,
+      };
+
+      const response = await warrantyApi.create(payload);
       const currentWarranties = get().warranties;
       const updatedWarranties = [...currentWarranties, warranty];
       
@@ -137,14 +165,26 @@ export const useWarrantyStore = create<WarrantyState>((set, get) => ({
   updateWarranty: async (id: string, updatedFields: Partial<Warranty>) => {
     set({ isLoading: true, error: null });
     try {
-      const formData = new FormData();
-      Object.entries(updatedFields).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
-          formData.append(key, value);
-        }
-      });
+      // Convert images to base64 if they exist
+      let receiptImageBase64: string | undefined;
+      let productImageBase64: string | undefined;
 
-      await warrantyApi.update(id, formData);
+      if (updatedFields.receiptImage) {
+        receiptImageBase64 = await convertImageToBase64(updatedFields.receiptImage);
+      }
+      if (updatedFields.productImage) {
+        productImageBase64 = await convertImageToBase64(updatedFields.productImage);
+      }
+
+      // Create the request payload
+      const payload = {
+        ...updatedFields,
+        companyName: updatedFields.company,
+        receiptImage: receiptImageBase64,
+        productImage: productImageBase64,
+      };
+
+      await warrantyApi.update(id, payload);
       const currentWarranties = get().warranties;
       const updatedWarranties = currentWarranties.map(warranty => 
         warranty.id === id ? { ...warranty, ...updatedFields } : warranty
