@@ -150,7 +150,7 @@ export const authApi = {
   async signOut(): Promise<void> {
     const token = await storage.getItem('accessToken');
     if (token) {
-      await apiRequest('/api/auth/signout', {
+      await apiRequest('/api/auth/logout', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`
