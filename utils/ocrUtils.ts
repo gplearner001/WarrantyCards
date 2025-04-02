@@ -190,66 +190,22 @@ export async function performOcr(imagePath: string): Promise<ExtractedWarrantyDa
         await worker.terminate();
         
         if (!text) {
-          console.log('No text recognized, using fallback');
-          return simulateOcrResult();
+          console.log('No text recognized');
+          return {};
         }
         
         return processOcrText(text);
       } catch (err) {
         console.error('Tesseract OCR Error:', err);
-        return simulateOcrResult();
+        return {};
       }
     } else {
-      // For native platforms, we'll use simulated results for now
+      // For native platforms, return empty data
       // In a production app, you would implement platform-specific OCR here
-      return simulateOcrResult();
+      return {};
     }
   } catch (error) {
     console.error('Error in OCR processing:', error);
-    return simulateOcrResult();
+    return {};
   }
-}
-
-/**
- * Generate simulated OCR results for testing or fallback
- * @returns Simulated warranty data
- */
-function simulateOcrResult(): ExtractedWarrantyData {
-  const products = [
-    'Smart TV 55" OLED',
-    'Wireless Headphones',
-    'Smartphone Pro Max',
-    'Laptop Ultra Slim',
-    'Digital Camera 24MP',
-    'Bluetooth Speaker'
-  ];
-  
-  const companies = [
-    'TechVision',
-    'SoundWave',
-    'MobilePro',
-    'ComputeX',
-    'PhotoTech',
-    'AudioSphere'
-  ];
-  
-  const today = new Date();
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setMonth(today.getMonth() - 6);
-  const randomPurchaseDate = new Date(
-    sixMonthsAgo.getTime() + Math.random() * (today.getTime() - sixMonthsAgo.getTime())
-  );
-  
-  const expiryDate = new Date(randomPurchaseDate);
-  expiryDate.setFullYear(expiryDate.getFullYear() + Math.floor(Math.random() * 2) + 1);
-  
-  const price = (Math.floor(Math.random() * 1900) + 100).toFixed(2);
-  
-  return {
-    productName: products[Math.floor(Math.random() * products.length)],
-    company: companies[Math.floor(Math.random() * companies.length)],
-    purchaseDate: randomPurchaseDate.toISOString().split('T')[0],
-    expiryDate: expiryDate.toISOString().split('T')[0],
-    price: price
-  };
 }

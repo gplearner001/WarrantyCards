@@ -14,10 +14,12 @@ import { formatDistanceToNow } from '../../utils/dateUtils';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell, Clock, Search, ShieldCheck } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import { useAuth } from '../../context/AuthContext';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { warranties, fetchWarranties, isLoading } = useWarrantyStore();
+  const { user } = useAuth();
   const [refreshing, setRefreshing] = React.useState(false);
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Hello,</Text>
-            <Text style={styles.userName}>User</Text>
+            <Text style={styles.userName}>{user?.name || 'Guest'}</Text>
           </View>
           <TouchableOpacity style={styles.searchButton}>
             <Search size={24} color="#4361ee" />
@@ -111,7 +113,7 @@ export default function HomeScreen() {
                   onPress={() => router.push(`/warranty/${warranty.id}`)}
                 >
                   <Image
-                    source={{ uri: warranty.productImage || 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=2070' }}
+                    source={{ uri: warranty.productImage || warranty.receiptImage || 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=2070' }}
                     style={styles.expiringCardImage}
                   />
                   <View style={styles.expiringCardContent}>
@@ -154,7 +156,7 @@ export default function HomeScreen() {
                 onPress={() => router.push(`/warranty/${warranty.id}`)}
               >
                 <Image
-                  source={{ uri: warranty.productImage || 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=2070' }}
+                  source={{ uri: warranty.productImage || warranty.receiptImage || 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=2070' }}
                   style={styles.recentCardImage}
                 />
                 <View style={styles.recentCardContent}>
