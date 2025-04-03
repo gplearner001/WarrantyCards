@@ -17,10 +17,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera, CameraType, BarcodeScanningResult, CameraView } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useWarrantyStore } from '../../store/warrantyStore';
-import Animated, { FadeIn, FadeInUp, FadeOut } from 'react-native-reanimated';
-import { Camera as CameraIcon, Image as ImageIcon, QrCode, X, Check, ArrowLeft, Building2, ShoppingBag, Clock, Info, Loader as Loader2 } from 'lucide-react-native';
+import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimated';
+import { Camera as CameraIcon, Image as ImageIcon, QrCode, X, Check, ArrowLeft, Building2, ShoppingBag, Clock, Info, Loader as Loader2, Calendar } from 'lucide-react-native';
 import { performOcr, ExtractedWarrantyData } from '../../utils/ocrUtils';
+import { formatDate } from '../../utils/dateUtils';
 
 export default function ScanScreen() {
   const router = useRouter();
@@ -36,11 +38,12 @@ export default function ScanScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [isProcessingBarcode, setIsProcessingBarcode] = useState(false);
   const lastScannedBarcode = useRef<string | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   
   // Form data
   const [productName, setProductName] = useState('');
   const [company, setCompany] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
+  const [expiryDate, setExpiryDate] = useState<Date | null>(null);
   const [additionalInfo, setAdditionalInfo] = useState('');
   const [scanned, setScanned] = useState(false);
   
@@ -52,6 +55,17 @@ export default function ScanScreen() {
       setHasPermission(status === 'granted');
     })();
   }, []);
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setExpiryDate(selectedDate);
+    }
+  };
+
+  const showDatePickerModal = () => {
+    setShowDatePicker(true);
+  };
 
   const fetchProductInfo = async (barcode: string) => {
     try {
@@ -174,7 +188,7 @@ export default function ScanScreen() {
       
       if (extractedData.productName) setProductName(extractedData.productName);
       if (extractedData.company) setCompany(extractedData.company);
-      if (extractedData.expiryDate) setExpiryDate(extractedData.expiryDate);
+      if (extractedData.expiryDate) setExpiryDate(new Date(extractedData.expiryDate));
       
       if (extractedData.productName || extractedData.company) {
         Alert.alert('Success', 'Receipt information extracted successfully!');
@@ -201,7 +215,7 @@ export default function ScanScreen() {
         id: Date.now().toString(),
         productName,
         company,
-        expiryDate: expiryDate || undefined,
+        expiryDate: expiryDate ? expiryDate.toISOString() : undefined,
         additionalInfo: additionalInfo || undefined,
         receiptImage: capturedImage || undefined,
         productImage,
@@ -225,7 +239,7 @@ export default function ScanScreen() {
     setProductImage(null);
     setProductName('');
     setCompany('');
-    setExpiryDate('');
+    setExpiryDate(null);
     setAdditionalInfo('');
   };
 
@@ -344,8 +358,7 @@ export default function ScanScreen() {
 
           {isProcessing ? (
             <Animated.View 
-              entering={FadeIn} 
-              exiting={FadeOut}
+              entering={FadeIn}
               style={styles.processingContainer}
             >
               <ActivityIndicator size="large" color="#4361ee" />
@@ -354,7 +367,7 @@ export default function ScanScreen() {
             </Animated.View>
           ) : (
             <>
-              <Animated.View entering={FadeInUp.duration(800).delay(200)}>
+              <Animated.View entering={FadeInDown.duration(800).delay(200)}>
                 <View style={styles.captureSection}>
                   <Text style={styles.sectionTitle}>Receipt Image (Optional)</Text>
                   <View style={styles.captureOptions}>
@@ -388,7 +401,7 @@ export default function ScanScreen() {
                 </View>
               </Animated.View>
 
-              <Animated.View entering={FadeInUp.duration(800).delay(300)}>
+              <Animated.View entering={FadeInDown.duration(800).delay(300)}>
                 <View style={styles.captureSection}>
                   <Text style={styles.sectionTitle}>Product Image</Text>
                   <View style={styles.captureOptions}>
@@ -429,7 +442,7 @@ export default function ScanScreen() {
                 </View>
               </Animated.View>
 
-              <Animated.View entering={FadeInUp.duration(800).delay(400)}>
+              <Animated.View entering={FadeInDown.duration(800).delay(400)}>
                 <View style={styles.formSection}>
                   <Text style={styles.sectionTitle}>Warranty Details</Text>
 
@@ -459,19 +472,45 @@ export default function ScanScreen() {
                     />
                   </View>
 
-                  <View style={styles.inputGroup}>
+                  <TouchableOpacity 
+                    style={styles.inputGroup}
+                    onPress={showDatePickerModal}
+                  >
                     <View style={styles.inputIcon}>
-                      <Clock size={20} color="#4361ee" />
+                      <Calendar size={20} color="#4361ee" />
                     </View>
-                    <TextInput
-                      style={[styles.input, !expiryDate && styles.inputPlaceholder]}
-                      placeholder="Expiry Date (YYYY-MM-DD)"
-                      placeholderTextColor="#adb5bd"
-                      value={expiryDate}
-                      onChangeText={setExpiryDate}
-                      keyboardType="numbers-and-punctuation"
-                    />
-                  </View>
+                    <View style={[styles.input, styles.datePickerButton]}>
+                      <Text style={[
+                        styles.datePickerText,
+                        !expiryDate && { color: '#adb5bd' }
+                      ]}>
+                        {expiryDate ? formatDate(expiryDate) : 'Select Expiry Date'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  {(showDatePicker || Platform.OS === 'ios') && (
+                    <View style={styles.datePickerContainer}>
+                      <DateTimePicker
+                        testID="dateTimePicker"
+                        value={expiryDate || new Date()}
+                        mode="date"
+                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                        onChange={handleDateChange}
+                        minimumDate={new Date()}
+                        textColor="#212529"
+                        style={styles.datePicker}
+                      />
+                      {Platform.OS === 'ios' && (
+                        <TouchableOpacity
+                          style={styles.datePickerDoneButton}
+                          onPress={() => setShowDatePicker(false)}
+                        >
+                          <Text style={styles.datePickerDoneButtonText}>Done</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  )}
 
                   <View style={styles.inputGroup}>
                     <View style={styles.inputIcon}>
@@ -490,7 +529,7 @@ export default function ScanScreen() {
                 </View>
               </Animated.View>
 
-              <Animated.View entering={FadeInUp.duration(800).delay(500)} style={styles.buttonContainer}>
+              <Animated.View entering={FadeInDown.duration(800).delay(500)} style={styles.buttonContainer}>
                 <TouchableOpacity 
                   style={styles.resetButton} 
                   onPress={resetForm}
@@ -763,6 +802,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#212529',
   },
+  datePickerButton: {
+    justifyContent: 'center',
+  },
+  datePickerText: {
+    fontSize: 16,
+    color: '#212529',
+  },
   inputPlaceholder: {
     color: '#adb5bd',
   },
@@ -843,5 +889,32 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  datePickerContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
+    ...(Platform.OS === 'ios' && {
+      marginTop: 8,
+    }),
+  },
+  datePicker: {
+    height: 200,
+    ...(Platform.OS === 'ios' && {
+      backgroundColor: '#ffffff',
+    }),
+  },
+  datePickerDoneButton: {
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+  },
+  datePickerDoneButtonText: {
+    color: '#4361ee',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
