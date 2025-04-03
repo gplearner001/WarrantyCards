@@ -44,7 +44,7 @@ export default function ProfileScreen() {
     if (!isSubscribed) {
       Alert.alert(
         'Upgrade to Premium',
-        'Get warranty expiry notifications and more features for just $4.99/month',
+        'Get expiry notifications and more features for just $4.99/month',
         [
           { text: 'Cancel', style: 'cancel' },
           {
@@ -167,7 +167,7 @@ export default function ProfileScreen() {
         </Animated.View>
 
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>WarrantyCards v1.0.0</Text>
+          <Text style={styles.versionText}>TrackMyExpiry v1.0.0</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   versionContainer: {
-    alignItems: 'center',
+    alignItems:  'center',
     marginBottom: 40,
   },
   versionText: {

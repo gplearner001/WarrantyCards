@@ -1,7 +1,7 @@
 module.exports = {
   expo: {
-    name: "warranty-cards",
-    slug: "warranty-cards",
+    name: "TrackMyExpiry",
+    slug: "trackmyexpiry",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
@@ -31,7 +31,7 @@ module.exports = {
         NSPhotoLibraryUsageDescription: "This app needs access to your photo library to select receipt and product images",
         UIBackgroundModes: ["remote-notification"]
       },
-      bundleIdentifier: "com.warrantytracker.app",
+      bundleIdentifier: "com.trackmyexpiry.app",
       googleServicesFile: "./GoogleService-Info.plist"
     },
     android: {
@@ -40,7 +40,7 @@ module.exports = {
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
       ],
-      package: "com.warrantytracker.app",
+      package: "com.trackmyexpiry.app",
       googleServicesFile: "./google-services.json"
     },
     web: {

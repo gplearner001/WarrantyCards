@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -46,7 +45,7 @@ export default function LoginScreen() {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Animated.View entering={FadeInUp.duration(800).delay(200)} style={styles.logoContainer}>
           <ShieldCheck size={60} color="#4361ee" />
-          <Text style={styles.logoText}>WarrantyCards</Text>
+          <Text style={styles.logoText}>TrackMyExpiry</Text>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.duration(800).delay(400)} style={styles.formContainer}>
