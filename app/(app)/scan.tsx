@@ -365,7 +365,7 @@ export default function ScanScreen() {
             <>
               <Animated.View entering={FadeInUp.duration(800).delay(200)}>
                 <View style={styles.captureSection}>
-                  <Text style={styles.sectionTitle}>Receipt Image</Text>
+                  <Text style={styles.sectionTitle}>Receipt Image (Optional)</Text>
                   <View style={styles.captureOptions}>
                     <TouchableOpacity
                       style={styles.captureOption}
@@ -399,7 +399,7 @@ export default function ScanScreen() {
 
               <Animated.View entering={FadeInUp.duration(800).delay(300)}>
                 <View style={styles.captureSection}>
-                  <Text style={styles.sectionTitle}>Product Image (Optional)</Text>
+                  <Text style={styles.sectionTitle}>Product Image</Text>
                   <View style={styles.captureOptions}>
                     <TouchableOpacity
                       style={styles.captureOption}
