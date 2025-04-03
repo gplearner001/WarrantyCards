@@ -57,7 +57,10 @@ export default function ScanScreen() {
   }, []);
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    
     if (selectedDate) {
       setExpiryDate(selectedDate);
     }
@@ -65,6 +68,10 @@ export default function ScanScreen() {
 
   const showDatePickerModal = () => {
     setShowDatePicker(true);
+  };
+
+  const hideDatePicker = () => {
+    setShowDatePicker(false);
   };
 
   const fetchProductInfo = async (barcode: string) => {
@@ -489,7 +496,7 @@ export default function ScanScreen() {
                     </View>
                   </TouchableOpacity>
 
-                  {(showDatePicker || Platform.OS === 'ios') && (
+                  {showDatePicker && (
                     <View style={styles.datePickerContainer}>
                       <DateTimePicker
                         testID="dateTimePicker"
@@ -504,7 +511,7 @@ export default function ScanScreen() {
                       {Platform.OS === 'ios' && (
                         <TouchableOpacity
                           style={styles.datePickerDoneButton}
-                          onPress={() => setShowDatePicker(false)}
+                          onPress={hideDatePicker}
                         >
                           <Text style={styles.datePickerDoneButtonText}>Done</Text>
                         </TouchableOpacity>
