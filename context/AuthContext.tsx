@@ -8,7 +8,7 @@ type AuthContextType = {
   isLoading: boolean;
   isSubscribed: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, confirmPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   toggleSubscription: () => void;
   user: any | null;
@@ -89,11 +89,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       const response = await authApi.signIn({ email, password });
       
-      await storage.setItem('accessToken', response.token);
-      await storage.setItem('userData', JSON.stringify(response.user));
-      
-      setUser(response.user);
-      setIsAuthenticated(true);
+      if (response.token && response.user) {
+        await storage.setItem('accessToken', response.token);
+        await storage.setItem('userData', JSON.stringify(response.user));
+        
+        setUser(response.user);
+        setIsAuthenticated(true);
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (error) {
       console.error('Login error:', error);
       throw new Error('Login failed. Please try again.');
@@ -102,16 +106,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string, confirmPassword: string) => {
     try {
       setIsLoading(true);
-      const response = await authApi.signUp({ name, email, password });
       
-      await storage.setItem('accessToken', response.token);
-      await storage.setItem('userData', JSON.stringify(response.user));
+      // First register the user
+      await authApi.signUp({ name, email, password, confirmPassword });
       
-      setUser(response.user);
-      setIsAuthenticated(true);
+      // Then login with the newly created credentials
+      await login(email, password);
+      
     } catch (error) {
       console.error('Registration error:', error);
       throw new Error('Registration failed. Please try again.');
@@ -124,6 +128,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       await authApi.signOut();
+      await storage.removeItem('accessToken');
+      await storage.removeItem('userData');
+      await storage.removeItem('subscriptionStatus');
       setIsAuthenticated(false);
       setUser(null);
       setIsSubscribed(false);

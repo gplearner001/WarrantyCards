@@ -34,6 +34,8 @@ export default function ScanScreen() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [productImage, setProductImage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isProcessingBarcode, setIsProcessingBarcode] = useState(false);
+  const lastScannedBarcode = useRef<string | null>(null);
   
   // Form data
   const [productName, setProductName] = useState('');
@@ -51,6 +53,67 @@ export default function ScanScreen() {
       setHasPermission(status === 'granted');
     })();
   }, []);
+
+  const fetchProductInfo = async (barcode: string) => {
+    try {
+      setIsProcessingBarcode(true);
+      const response = await fetch(`https://go-upc.com/search?q=${barcode}`);
+      const html = await response.text();
+
+      // Extract product name
+      const productNameMatch = html.match(/<h1 class="product-name">(.*?)<\/h1>/);
+      const productName = productNameMatch ? productNameMatch[1].trim() : '';
+
+      // Extract product image
+      const imageMatch = html.match(/<figure class="product-image[^>]*>\s*<img src="([^"]*)"[^>]*>/);
+      let imageUrl = imageMatch ? imageMatch[1] : null;
+
+      // If no image found or invalid URL, use a default image
+      if (!imageUrl || !imageUrl.startsWith('http')) {
+        imageUrl = 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=2070';
+      }
+
+      if (productName) {
+        setProductName(productName);
+      }
+      if (imageUrl) {
+        setProductImage(imageUrl);
+      }
+
+      setIsCameraActive(false);
+      setIsScanning(false);
+
+      if (!productName && !imageUrl) {
+        Alert.alert('Product Not Found', 'Could not find product information for this barcode.');
+      }
+    } catch (error) {
+      console.error('Error fetching product info:', error);
+      Alert.alert('Error', 'Failed to fetch product information. Please try again.');
+    } finally {
+      setIsProcessingBarcode(false);
+    }
+  };
+
+  const handleBarCodeScanned = async (scanResult: BarcodeScanningResult) => {
+    const barcode = scanResult.data;
+    
+    // Prevent multiple scans of the same barcode
+    if (lastScannedBarcode.current === barcode || !isScanning) {
+      return;
+    }
+    
+    lastScannedBarcode.current = barcode;
+    setScanned(true);
+    
+    // Only process numeric barcodes
+    if (/^\d+$/.test(barcode)) {
+      await fetchProductInfo(barcode);
+    } else {
+      setIsScanning(false);
+      setIsCameraActive(false);
+      Alert.alert('Invalid Barcode', 'Please scan a valid product barcode.');
+    }
+  };
 
   const takePicture = async () => {
     if (cameraRef.current) {
@@ -106,22 +169,6 @@ export default function ScanScreen() {
     } catch (error) {
       console.error('Error picking image:', error);
       Alert.alert('Error', 'Failed to select image. Please try again.');
-    }
-  };
-
-  const handleBarCodeScanned = (scanResult: BarcodeScanningResult) => {
-    if (!isScanning) return;
-    
-    setIsScanning(false);
-    setIsCameraActive(false);
-    
-    try {
-      const qrData = scanResult.data;
-      console.log("qr code data: ", qrData);
-      Alert.alert('Success', 'QR code scanned successfully!');
-    } catch (error) {
-      console.error('Error parsing QR code:', error);
-      Alert.alert('Error', 'Invalid QR code format. Please try again.');
     }
   };
 
@@ -241,23 +288,23 @@ export default function ScanScreen() {
           barcodeScannerSettings={{
             barcodeTypes: ['qr','code128', 'code39','ean13','ean8'],
           }}
-          onBarcodeScanned={(result) => {
-            console.log("scanner result:", result.data);
-            handleBarCodeScanned(result);
-            setIsScanning(true);
-          }}
+          onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
         >
           <View style={styles.cameraOverlay}>
             <View style={styles.cameraHeader}>
               <TouchableOpacity
                 style={styles.cameraBackButton}
-                onPress={() => setIsCameraActive(false)}
+                onPress={() => {
+                  setIsCameraActive(false);
+                  setScanned(false);
+                  lastScannedBarcode.current = null;
+                }}
               >
                 <ArrowLeft size={24} color="#ffffff" />
               </TouchableOpacity>
               <Text style={styles.cameraTitle}>
                 {scanMode === 'receipt' ? 'Scan Receipt' : 
-                 scanMode === 'product' ? 'Capture Product' : 'Scan QR Code'}
+                 scanMode === 'product' ? 'Capture Product' : 'Scan Barcode'}
               </Text>
               <View style={{ width: 40 }} />
             </View>
@@ -271,11 +318,18 @@ export default function ScanScreen() {
               </View>
             )}
 
+            {isProcessingBarcode && (
+              <View style={styles.processingOverlay}>
+                <ActivityIndicator size="large" color="#ffffff" />
+                <Text style={styles.processingText}>Fetching product info...</Text>
+              </View>
+            )}
+
             <View style={styles.cameraControls}>
               <TouchableOpacity
                 style={styles.captureButton}
                 onPress={takePicture}
-                disabled={isScanning}
+                disabled={isScanning || isProcessingBarcode}
               >
                 <View style={styles.captureButtonInner} />
               </TouchableOpacity>
@@ -332,7 +386,7 @@ export default function ScanScreen() {
                       onPress={() => startCamera('qr')}
                     >
                       <QrCode size={24} color="#4361ee" />
-                      <Text style={styles.captureOptionText}>QR Code</Text>
+                      <Text style={styles.captureOptionText}>Scan Barcode</Text>
                     </TouchableOpacity>
                   </View>
 
@@ -802,5 +856,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6c757d',
     marginTop: 8,
+  },
+  processingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

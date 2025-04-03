@@ -70,15 +70,34 @@ const mapAPIWarrantyToWarranty = (apiWarranty: APIWarranty): Warranty => ({
   createdAt: apiWarranty.created_at,
 });
 
-// Helper function to convert file URI to base64
+// Helper function to convert image to base64
 const convertImageToBase64 = async (uri: string): Promise<string> => {
   try {
-    // Remove the file:// prefix for iOS
-    const fileUri = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
-    const base64 = await FileSystem.readAsStringAsync(fileUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-    return `data:image/jpeg;base64,${base64}`;
+    // Check if the URI is a remote URL
+    if (uri.startsWith('http://') || uri.startsWith('https://')) {
+      // Download the image first
+      const filename = uri.split('/').pop() || 'image.jpg';
+      const downloadPath = `${FileSystem.cacheDirectory}${filename}`;
+      
+      const { uri: localUri } = await FileSystem.downloadAsync(uri, downloadPath);
+      
+      // Now read the downloaded file
+      const base64 = await FileSystem.readAsStringAsync(localUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      
+      // Clean up the downloaded file
+      await FileSystem.deleteAsync(localUri, { idempotent: true });
+      
+      return `data:image/jpeg;base64,${base64}`;
+    } else {
+      // Handle local file URI
+      const fileUri = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
+      const base64 = await FileSystem.readAsStringAsync(fileUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      return `data:image/jpeg;base64,${base64}`;
+    }
   } catch (error) {
     console.error('Error converting image to base64:', error);
     throw error;

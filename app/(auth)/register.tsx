@@ -37,7 +37,7 @@ export default function RegisterScreen() {
 
     try {
       setError(null);
-      await register(name, email, password);
+      await register(name, email, password, confirmPassword);
       router.replace('/(app)');
     } catch (err) {
       setError('Registration failed. Please try again.');

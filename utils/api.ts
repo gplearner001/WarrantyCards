@@ -16,6 +16,11 @@ interface AuthResponse {
   };
 }
 
+interface SignUpResponse {
+  message: string;
+  userId: string;
+}
+
 interface WarrantyResponse {
   warrantyId: string;
   message: string;
@@ -126,7 +131,7 @@ async function apiRequest<T>(
 
 // Auth API
 export const authApi = {
-  async signUp(data: { name: string; email: string; password: string }): Promise<AuthResponse> {
+  async signUp(data: { name: string; email: string; password: string; confirmPassword: string }): Promise<SignUpResponse> {
     return apiRequest('/api/auth/signup', {
       method: 'POST',
       body: JSON.stringify(data)
