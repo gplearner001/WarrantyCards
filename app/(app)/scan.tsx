@@ -19,7 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useWarrantyStore } from '../../store/warrantyStore';
 import Animated, { FadeIn, FadeInUp, FadeOut } from 'react-native-reanimated';
-import { Camera as CameraIcon, Image as ImageIcon, QrCode, X, Check, ArrowLeft, Calendar, Building2, ShoppingBag, Clock, Info, Loader as Loader2 } from 'lucide-react-native';
+import { Camera as CameraIcon, Image as ImageIcon, QrCode, X, Check, ArrowLeft, Building2, ShoppingBag, Clock, Info, Loader as Loader2 } from 'lucide-react-native';
 import { performOcr, ExtractedWarrantyData } from '../../utils/ocrUtils';
 
 export default function ScanScreen() {
@@ -40,7 +40,6 @@ export default function ScanScreen() {
   // Form data
   const [productName, setProductName] = useState('');
   const [company, setCompany] = useState('');
-  const [purchaseDate, setPurchaseDate] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [additionalInfo, setAdditionalInfo] = useState('');
   const [scanned, setScanned] = useState(false);
@@ -60,15 +59,12 @@ export default function ScanScreen() {
       const response = await fetch(`https://go-upc.com/search?q=${barcode}`);
       const html = await response.text();
 
-      // Extract product name
       const productNameMatch = html.match(/<h1 class="product-name">(.*?)<\/h1>/);
       const productName = productNameMatch ? productNameMatch[1].trim() : '';
 
-      // Extract product image
       const imageMatch = html.match(/<figure class="product-image[^>]*>\s*<img src="([^"]*)"[^>]*>/);
       let imageUrl = imageMatch ? imageMatch[1] : null;
 
-      // If no image found or invalid URL, use a default image
       if (!imageUrl || !imageUrl.startsWith('http')) {
         imageUrl = 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=2070';
       }
@@ -97,7 +93,6 @@ export default function ScanScreen() {
   const handleBarCodeScanned = async (scanResult: BarcodeScanningResult) => {
     const barcode = scanResult.data;
     
-    // Prevent multiple scans of the same barcode
     if (lastScannedBarcode.current === barcode || !isScanning) {
       return;
     }
@@ -105,7 +100,6 @@ export default function ScanScreen() {
     lastScannedBarcode.current = barcode;
     setScanned(true);
     
-    // Only process numeric barcodes
     if (/^\d+$/.test(barcode)) {
       await fetchProductInfo(barcode);
     } else {
@@ -180,7 +174,6 @@ export default function ScanScreen() {
       
       if (extractedData.productName) setProductName(extractedData.productName);
       if (extractedData.company) setCompany(extractedData.company);
-      if (extractedData.purchaseDate) setPurchaseDate(extractedData.purchaseDate);
       if (extractedData.expiryDate) setExpiryDate(extractedData.expiryDate);
       
       if (extractedData.productName || extractedData.company) {
@@ -197,8 +190,8 @@ export default function ScanScreen() {
   };
 
   const saveWarranty = async () => {
-    if (!productName || !company || !purchaseDate) {
-      Alert.alert('Missing Information', 'Please fill in all required fields: Product Name, Company, and Purchase Date.');
+    if (!productName || !company) {
+      Alert.alert('Missing Information', 'Please fill in all required fields: Product Name and Company.');
       return;
     }
     
@@ -208,10 +201,9 @@ export default function ScanScreen() {
         id: Date.now().toString(),
         productName,
         company,
-        purchaseDate,
         expiryDate: expiryDate || undefined,
         additionalInfo: additionalInfo || undefined,
-        receiptImage: capturedImage,
+        receiptImage: capturedImage || undefined,
         productImage,
         createdAt: new Date().toISOString(),
       };
@@ -233,7 +225,6 @@ export default function ScanScreen() {
     setProductImage(null);
     setProductName('');
     setCompany('');
-    setPurchaseDate('');
     setExpiryDate('');
     setAdditionalInfo('');
   };
@@ -465,20 +456,6 @@ export default function ScanScreen() {
                       placeholderTextColor="#adb5bd"
                       value={company}
                       onChangeText={setCompany}
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <View style={styles.inputIcon}>
-                      <Calendar size={20} color="#4361ee" />
-                    </View>
-                    <TextInput
-                      style={[styles.input, !purchaseDate && styles.inputPlaceholder]}
-                      placeholder="Purchase Date (YYYY-MM-DD) *"
-                      placeholderTextColor="#adb5bd"
-                      value={purchaseDate}
-                      onChangeText={setPurchaseDate}
-                      keyboardType="numbers-and-punctuation"
                     />
                   </View>
 
