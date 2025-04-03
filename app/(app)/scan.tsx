@@ -381,13 +381,6 @@ export default function ScanScreen() {
                       <ImageIcon size={24} color="#4361ee" />
                       <Text style={styles.captureOptionText}>Gallery</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.captureOption}
-                      onPress={() => startCamera('qr')}
-                    >
-                      <QrCode size={24} color="#4361ee" />
-                      <Text style={styles.captureOptionText}>Scan Barcode</Text>
-                    </TouchableOpacity>
                   </View>
 
                   {capturedImage && (
@@ -421,6 +414,13 @@ export default function ScanScreen() {
                     >
                       <ImageIcon size={24} color="#4361ee" />
                       <Text style={styles.captureOptionText}>Gallery</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.captureOption}
+                      onPress={() => startCamera('qr')}
+                    >
+                      <QrCode size={24} color="#4361ee" />
+                      <Text style={styles.captureOptionText}>Scan Barcode</Text>
                     </TouchableOpacity>
                   </View>
 
