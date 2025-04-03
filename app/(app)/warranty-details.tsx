@@ -14,7 +14,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWarrantyStore } from '../../store/warrantyStore';
 import { formatDate } from '../../utils/dateUtils';
-import { ArrowLeft, Calendar, Clock, CreditCard as Edit2, Info, Share2, ShoppingBag, Store, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Clock, CreditCard as Edit2, Info, Share2, ShoppingBag, Store, Trash2 } from 'lucide-react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 export default function WarrantyDetailScreen() {
@@ -63,9 +63,7 @@ export default function WarrantyDetailScreen() {
 
       await Share.share({
         title: `Warranty for ${warranty.productName}`,
-        message: `Product: ${warranty.productName}\nCompany: ${warranty.company}\nPurchased: ${formatDate(
-          new Date(warranty.purchaseDate)
-        )}\n${expiryInfo}`,
+        message: `Product: ${warranty.productName}\nCompany: ${warranty.company}\n${expiryInfo}`,
       });
     } catch (error) {
       console.error('Error sharing warranty:', error);
@@ -131,18 +129,6 @@ export default function WarrantyDetailScreen() {
           <Text style={styles.companyName}>{warranty.company}</Text>
 
           <View style={styles.detailsContainer}>
-            <View style={styles.detailRow}>
-              <View style={styles.detailIconContainer}>
-                <Calendar size={20} color="#4361ee" />
-              </View>
-              <View style={styles.detailTextContainer}>
-                <Text style={styles.detailLabel}>Purchase Date</Text>
-                <Text style={styles.detailValue}>
-                  {formatDate(new Date(warranty.purchaseDate))}
-                </Text>
-              </View>
-            </View>
-
             {warranty.expiryDate && (
               <View style={styles.detailRow}>
                 <View style={styles.detailIconContainer}>
@@ -209,7 +195,6 @@ export default function WarrantyDetailScreen() {
             <TouchableOpacity
               style={[styles.actionButton, styles.editButton]}
               onPress={() => {
-                // In a real app, this would navigate to an edit screen
                 Alert.alert('Edit', 'Edit functionality would be implemented here');
               }}
             >

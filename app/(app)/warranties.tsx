@@ -106,30 +106,25 @@ export default function WarrantiesScreen() {
             <Text style={styles.warrantyCompany} numberOfLines={1}>
               {item.company}
             </Text>
-            <View style={styles.warrantyMeta}>
-              <Text style={styles.warrantyDate}>
-                Purchased: {formatDate(new Date(item.purchaseDate))}
-              </Text>
-              {warrantyStatus && (
-                <View style={styles.expiryContainer}>
-                  <Clock 
-                    size={14} 
-                    color={warrantyStatus.type === 'expired' ? "#dc3545" : 
-                           warrantyStatus.type === 'expiring' ? "#ffc107" : 
-                           "#6c757d"} 
-                  />
-                  <Text
-                    style={[
-                      styles.warrantyExpiry,
-                      warrantyStatus.type === 'expired' && styles.expiredText,
-                      warrantyStatus.type === 'expiring' && styles.expiringText,
-                    ]}
-                  >
-                    {warrantyStatus.text}
-                  </Text>
-                </View>
-              )}
-            </View>
+            {warrantyStatus && (
+              <View style={styles.expiryContainer}>
+                <Clock 
+                  size={14} 
+                  color={warrantyStatus.type === 'expired' ? "#dc3545" : 
+                         warrantyStatus.type === 'expiring' ? "#ffc107" : 
+                         "#6c757d"} 
+                />
+                <Text
+                  style={[
+                    styles.warrantyExpiry,
+                    warrantyStatus.type === 'expired' && styles.expiredText,
+                    warrantyStatus.type === 'expiring' && styles.expiringText,
+                  ]}
+                >
+                  {warrantyStatus.text}
+                </Text>
+              </View>
+            )}
           </View>
         </TouchableOpacity>
       </Animated.View>
@@ -354,13 +349,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6c757d',
     marginBottom: 8,
-  },
-  warrantyMeta: {
-    gap: 4,
-  },
-  warrantyDate: {
-    fontSize: 12,
-    color: '#6c757d',
   },
   expiryContainer: {
     flexDirection: 'row',
