@@ -192,7 +192,7 @@ export const warrantyApi = {
   },
 
   async delete(warrantyId: string): Promise<void> {
-    return apiRequest(`/api/warranty/${warrantyId}`, {
+    return apiRequest(`/api/warranty?warrantyId=${warrantyId}`, {
       method: 'DELETE'
     });
   }
