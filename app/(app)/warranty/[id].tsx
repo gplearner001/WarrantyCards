@@ -149,18 +149,6 @@ export default function WarrantyDetailScreen() {
           <Text style={styles.companyName}>{warranty.company}</Text>
 
           <View style={styles.detailsContainer}>
-            <View style={styles.detailRow}>
-              <View style={styles.detailIconContainer}>
-                <Calendar size={20} color="#4361ee" />
-              </View>
-              <View style={styles.detailTextContainer}>
-                <Text style={styles.detailLabel}>Purchase Date</Text>
-                <Text style={styles.detailValue}>
-                  {formatDate(new Date(warranty.purchaseDate))}
-                </Text>
-              </View>
-            </View>
-
             {warranty.expiryDate && (
               <View style={styles.detailRow}>
                 <View style={styles.detailIconContainer}>
