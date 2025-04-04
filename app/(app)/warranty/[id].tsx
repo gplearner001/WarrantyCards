@@ -9,12 +9,13 @@ import {
   Alert,
   Share,
   Platform,
+  Linking,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWarrantyStore } from '../../../store/warrantyStore';
 import { formatDate } from '../../../utils/dateUtils';
-import { ArrowLeft, Calendar, Clock, CreditCard as Edit2, Info, Share2, ShoppingBag, Store, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, Download, Info, Share2, ShoppingBag, Store, Trash2 } from 'lucide-react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 export default function WarrantyDetailScreen() {
@@ -69,6 +70,23 @@ export default function WarrantyDetailScreen() {
       });
     } catch (error) {
       console.error('Error sharing warranty:', error);
+    }
+  };
+
+  const handleDownloadReceipt = async () => {
+    if (!warranty?.receiptImage) return;
+
+    if (Platform.OS === 'web') {
+      // For web, open the image in a new tab
+      window.open(warranty.receiptImage, '_blank');
+    } else {
+      // For mobile, open the image URL
+      try {
+        await Linking.openURL(warranty.receiptImage);
+      } catch (error) {
+        console.error('Error opening receipt image:', error);
+        Alert.alert('Error', 'Failed to open receipt image.');
+      }
     }
   };
 
@@ -197,7 +215,16 @@ export default function WarrantyDetailScreen() {
 
           {warranty.receiptImage && (
             <View style={styles.receiptContainer}>
-              <Text style={styles.receiptTitle}>Receipt Image</Text>
+              <View style={styles.receiptHeader}>
+                <Text style={styles.receiptTitle}>Receipt Image</Text>
+                <TouchableOpacity
+                  style={styles.downloadButton}
+                  onPress={handleDownloadReceipt}
+                >
+                  <Download size={20} color="#4361ee" />
+                  <Text style={styles.downloadButtonText}>Download</Text>
+                </TouchableOpacity>
+              </View>
               <Image
                 source={{ uri: warranty.receiptImage }}
                 style={styles.receiptImage}
@@ -206,16 +233,6 @@ export default function WarrantyDetailScreen() {
           )}
 
           <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.editButton]}
-              onPress={() => {
-                // In a real app, this would navigate to an edit screen
-                Alert.alert('Edit', 'Edit functionality would be implemented here');
-              }}
-            >
-              <Edit2 size={20} color="#4361ee" />
-              <Text style={styles.editButtonText}>Edit</Text>
-            </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.deleteButton]}
               onPress={handleDelete}
@@ -353,11 +370,30 @@ const styles = StyleSheet.create({
   receiptContainer: {
     marginBottom: 24,
   },
+  receiptHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   receiptTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#212529',
-    marginBottom: 12,
+  },
+  downloadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e9efff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  downloadButtonText: {
+    color: '#4361ee',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   receiptImage: {
     width: '100%',
@@ -367,7 +403,7 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   actionButton: {
     flexDirection: 'row',
@@ -378,19 +414,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     flex: 1,
   },
-  editButton: {
-    backgroundColor: '#e9efff',
-    marginRight: 8,
-  },
   deleteButton: {
     backgroundColor: '#fff1f1',
-    marginLeft: 8,
-  },
-  editButtonText: {
-    color: '#4361ee',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
   },
   deleteButtonText: {
     color: '#dc3545',
