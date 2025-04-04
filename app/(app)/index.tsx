@@ -42,16 +42,26 @@ export default function HomeScreen() {
     return diffDays > 0 && diffDays <= 30;
   });
 
-  // Get recently added warranties (last 7 days)
-  const recentWarranties = warranties
-    .filter(warranty => {
-      const createdDate = new Date(warranty.createdAt);
-      const today = new Date();
-      const diffTime = today.getTime() - createdDate.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays <= 7;
-    })
-    .slice(0, 5);
+  // Get recently added warranties (today and yesterday only)
+  const recentWarranties = warranties.filter(warranty => {
+    const createdDate = new Date(warranty.createdAt);
+    const today = new Date();
+    
+    // Set today to start of day (midnight)
+    today.setHours(0, 0, 0, 0);
+    
+    // Calculate yesterday's date (start of day)
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Set created date to start of day for accurate comparison
+    const createdStartOfDay = new Date(createdDate);
+    createdStartOfDay.setHours(0, 0, 0, 0);
+    
+    // Check if the warranty was created today or yesterday
+    return createdStartOfDay >= yesterday;
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) // Sort by most recent first
+    .slice(0, 5); // Limit to 5 items
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -106,7 +116,7 @@ export default function HomeScreen() {
             contentContainerStyle={styles.expiringCardsContainer}
           >
             {expiringWarranties.length > 0 ? (
-              expiringWarranties.map((warranty, index) => (
+              expiringWarranties.map((warranty) => (
                 <TouchableOpacity
                   key={warranty.id}
                   style={styles.expiringCard}
@@ -126,7 +136,7 @@ export default function HomeScreen() {
                     <View style={styles.expiringCardFooter}>
                       <Clock size={14} color="#dc3545" />
                       <Text style={styles.expiringCardDate}>
-                        Expires in {formatDistanceToNow(new Date(warranty.expiryDate))}
+                        Expires in {warranty.expiryDate ? formatDistanceToNow(new Date(warranty.expiryDate)) : 'N/A'}
                       </Text>
                     </View>
                   </View>
@@ -149,7 +159,7 @@ export default function HomeScreen() {
           </View>
 
           {recentWarranties.length > 0 ? (
-            recentWarranties.map((warranty, index) => (
+            recentWarranties.map((warranty) => (
               <TouchableOpacity
                 key={warranty.id}
                 style={styles.recentCard}
