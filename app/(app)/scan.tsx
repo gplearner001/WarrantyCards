@@ -39,6 +39,7 @@ export default function ScanScreen() {
   const [isProcessingBarcode, setIsProcessingBarcode] = useState(false);
   const lastScannedBarcode = useRef<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   
   // Form data
   const [productName, setProductName] = useState('');
@@ -150,6 +151,7 @@ export default function ScanScreen() {
           processReceiptImage(manipResult.uri);
         } else if (scanMode === 'product') {
           setProductImage(manipResult.uri);
+          setValidationError(null); // Clear validation error when product image is added
           setIsCameraActive(false);
         }
       } catch (error) {
@@ -179,6 +181,7 @@ export default function ScanScreen() {
           processReceiptImage(manipResult.uri);
         } else {
           setProductImage(manipResult.uri);
+          setValidationError(null); // Clear validation error when product image is added
         }
       }
     } catch (error) {
@@ -210,9 +213,21 @@ export default function ScanScreen() {
     }
   };
 
-  const saveWarranty = async () => {
+  const validateForm = (): boolean => {
+    if (!productImage) {
+      setValidationError('Product image is required. Please add a product image or scan barcode on product.');
+      return false;
+    }
     if (!productName || !company) {
-      Alert.alert('Missing Information', 'Please fill in all required fields: Product Name and Company.');
+      setValidationError('Please fill in all required fields: Product Name and Company.');
+      return false;
+    }
+    setValidationError(null);
+    return true;
+  };
+
+  const saveWarranty = async () => {
+    if (!validateForm()) {
       return;
     }
     
@@ -248,6 +263,7 @@ export default function ScanScreen() {
     setCompany('');
     setExpiryDate(null);
     setAdditionalInfo('');
+    setValidationError(null);
   };
 
   const startCamera = (mode: 'receipt' | 'product' | 'qr') => {
@@ -410,7 +426,7 @@ export default function ScanScreen() {
 
               <Animated.View entering={FadeInDown.duration(800).delay(300)}>
                 <View style={styles.captureSection}>
-                  <Text style={styles.sectionTitle}>Product Image</Text>
+                  <Text style={styles.sectionTitle}>Product Image *</Text>
                   <View style={styles.captureOptions}>
                     <TouchableOpacity
                       style={styles.captureOption}
@@ -440,7 +456,10 @@ export default function ScanScreen() {
                       <Image source={{ uri: productImage }} style={styles.previewImage} />
                       <TouchableOpacity
                         style={styles.removeImageButton}
-                        onPress={() => setProductImage(null)}
+                        onPress={() => {
+                          setProductImage(null);
+                          setValidationError('Product image is required. Please add a product image or scan barcode on product.');
+                        }}
                       >
                         <X size={20} color="#ffffff" />
                       </TouchableOpacity>
@@ -452,6 +471,12 @@ export default function ScanScreen() {
               <Animated.View entering={FadeInDown.duration(800).delay(400)}>
                 <View style={styles.formSection}>
                   <Text style={styles.sectionTitle}>Warranty Details</Text>
+
+                  {validationError && (
+                    <View style={styles.errorContainer}>
+                      <Text style={styles.errorText}>{validationError}</Text>
+                    </View>
+                  )}
 
                   <View style={styles.inputGroup}>
                     <View style={styles.inputIcon}>
@@ -788,6 +813,19 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  errorContainer: {
+    backgroundColor: '#fff5f5',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#ffcdd2',
+  },
+  errorText: {
+    color: '#dc3545',
+    fontSize: 14,
+    textAlign: 'center',
+  },
   inputGroup: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -833,6 +871,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    
     backgroundColor: '#fff1f1',
     borderRadius: 8,
     padding: 16,
@@ -887,30 +926,14 @@ const styles = StyleSheet.create({
     color: '#6c757d',
     marginTop: 8,
   },
-  processingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   datePickerContainer: {
     backgroundColor: '#ffffff',
     borderRadius: 12,
     marginBottom: 16,
     overflow: 'hidden',
-    ...(Platform.OS === 'ios' && {
-      marginTop: 8,
-    }),
   },
   datePicker: {
-    height: 200,
-    ...(Platform.OS === 'ios' && {
-      backgroundColor: '#ffffff',
-    }),
+    backgroundColor: '#ffffff',
   },
   datePickerDoneButton: {
     alignItems: 'center',
@@ -923,5 +946,17 @@ const styles = StyleSheet.create({
     color: '#4361ee',
     fontSize: 16,
     fontWeight: '600',
+  },
+  processingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  processingOverlayText: {
+    color: '#ffffff',
+    fontSize: 16,
+    marginTop: 16,
+    textAlign: 'center',
   },
 });
