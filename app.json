@@ -47,6 +47,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "apiUrl": "process.env.EXPO_PUBLIC_API_URL",
+      "eas": {
+        "projectId": "ca402e95-61c7-45bd-a805-ef66f1d5898b"
+      }
     }
   }
 }

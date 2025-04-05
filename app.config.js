@@ -2,6 +2,7 @@ module.exports = {
   expo: {
     name: "TrackMyExpiry",
     slug: "trackmyexpiry",
+    owner: "gplearner001",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
@@ -36,8 +37,7 @@ module.exports = {
         NSPhotoLibraryUsageDescription: "This app needs access to your photo library to select receipt and product images",
         UIBackgroundModes: ["remote-notification"]
       },
-      bundleIdentifier: "com.trackmyexpiry.app",
-      googleServicesFile: "./GoogleService-Info.plist"
+      bundleIdentifier: "com.trackmyexpiry.app"
     },
     android: {
       permissions: [
@@ -46,7 +46,10 @@ module.exports = {
         "WRITE_EXTERNAL_STORAGE"
       ],
       package: "com.trackmyexpiry.app",
-      googleServicesFile: "./google-services.json"
+      adaptiveIcon: {
+        foregroundImage: "./assets/images/icon.png",
+        backgroundColor: "#ffffff"
+      }
     },
     web: {
       bundler: "metro",
@@ -57,10 +60,15 @@ module.exports = {
       typedRoutes: true
     },
     extra: {
-      apiUrl: process.env.EXPO_PUBLIC_API_URL,
       eas: {
-        projectId: "your-project-id"
+        projectId: "ca402e95-61c7-45bd-a805-ef66f1d5898b"
       }
+    },
+    updates: {
+      url: "https://u.expo.dev/ca402e95-61c7-45bd-a805-ef66f1d5898b"
+    },
+    runtimeVersion: {
+      policy: "appVersion"
     }
   }
 };
