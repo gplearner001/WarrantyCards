@@ -3,8 +3,18 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { Warranty } from '../store/warrantyStore';
 
-// Get the API URL from environment variables
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+// Get the API URL based on the environment
+const getApiUrl = () => {
+  // For EAS builds, use the production URL
+  if (Constants.appOwnership === 'expo' || Constants.appOwnership === 'standalone') {
+    return 'https://warranty-management-api.vercel.app'; // Replace with your actual production API URL
+  }
+  
+  // For development
+  return process.env.EXPO_PUBLIC_API_URL || 'https://warranty-management-api.vercel.app';
+};
+
+const BASE_URL = getApiUrl();
 
 // Types for API responses
 interface AuthResponse {
@@ -57,23 +67,29 @@ const storage = {
 // Logger utility
 const logger = {
   request: (method: string, url: string, headers: HeadersInit, body?: any) => {
-    console.group(`🚀 API Request: ${method} ${url}`);
-    console.log('Headers:', headers);
-    if (body) {
-      console.log('Body:', body);
+    if (__DEV__) {
+      console.group(`🚀 API Request: ${method} ${url}`);
+      console.log('Headers:', headers);
+      if (body) {
+        console.log('Body:', body);
+      }
+      console.groupEnd();
     }
-    console.groupEnd();
   },
   response: (method: string, url: string, status: number, data: any) => {
-    console.group(`✅ API Response: ${method} ${url}`);
-    console.log('Status:', status);
-    console.log('Data:', data);
-    console.groupEnd();
+    if (__DEV__) {
+      console.group(`✅ API Response: ${method} ${url}`);
+      console.log('Status:', status);
+      console.log('Data:', data);
+      console.groupEnd();
+    }
   },
   error: (method: string, url: string, error: any) => {
-    console.group(`❌ API Error: ${method} ${url}`);
-    console.error('Error:', error);
-    console.groupEnd();
+    if (__DEV__) {
+      console.group(`❌ API Error: ${method} ${url}`);
+      console.error('Error:', error);
+      console.groupEnd();
+    }
   }
 };
 

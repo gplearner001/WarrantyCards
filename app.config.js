@@ -43,7 +43,8 @@ module.exports = {
       permissions: [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET"
       ],
       package: "com.trackmyexpiry.app",
       adaptiveIcon: {
