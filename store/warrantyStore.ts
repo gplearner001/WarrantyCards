@@ -4,6 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 import * as FileSystem from 'expo-file-system';
 import { checkAndScheduleWarrantyNotifications } from '../utils/notificationUtils';
 import { warrantyApi } from '../utils/api';
+import { useRatingStore } from './ratingStore';
 
 export type Warranty = {
   id: string;
@@ -31,11 +32,10 @@ interface APIWarranty {
 
 type WarrantyState = {
   warranties: Warranty[];
-  
   isLoading: boolean;
   error: string | null;
   fetchWarranties: () => Promise<void>;
-  addWarranty: (warranty: Warranty) => Promise<void>;
+  addWarranty: (warranty: Warranty) => Promise<boolean>;
   updateWarranty: (id: string, warranty: Partial<Warranty>) => Promise<void>;
   deleteWarranty: (id: string) => Promise<void>;
   clearError: () => void;
@@ -160,6 +160,13 @@ export const useWarrantyStore = create<WarrantyState>((set, get) => ({
       if (Platform.OS !== 'web') {
         await checkAndScheduleWarrantyNotifications(updatedWarranties);
       }
+
+      // Increment warranty count in rating store
+      const ratingStore = useRatingStore.getState();
+      ratingStore.incrementWarrantyCount();
+
+      // Return whether to show rating prompt
+      return ratingStore.shouldShowRatingPrompt();
     } catch (error: any) {
       console.error('Error adding warranty:', error);
       set({ 

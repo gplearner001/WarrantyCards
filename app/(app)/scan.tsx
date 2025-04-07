@@ -23,6 +23,8 @@ import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimat
 import { Camera as CameraIcon, Image as ImageIcon, QrCode, X, Check, ArrowLeft, Building2, ShoppingBag, Clock, Info, Loader as Loader2, Calendar } from 'lucide-react-native';
 import { performOcr, ExtractedWarrantyData } from '../../utils/ocrUtils';
 import { formatDate } from '../../utils/dateUtils';
+import { useRatingStore } from '../../store/ratingStore';
+import RatingModal from '../../components/RatingModal';
 
 export default function ScanScreen() {
   const router = useRouter();
@@ -40,6 +42,7 @@ export default function ScanScreen() {
   const lastScannedBarcode = useRef<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [showRatingModal, setShowRatingModal] = useState(false);
   
   // Form data
   const [productName, setProductName] = useState('');
@@ -47,7 +50,7 @@ export default function ScanScreen() {
   const [expiryDate, setExpiryDate] = useState<Date | null>(null);
   const [additionalInfo, setAdditionalInfo] = useState('');
   const [scanned, setScanned] = useState(false);
-  
+  const { hasRated } = useRatingStore();
   const cameraRef = useRef<CameraView | null>(null);
 
   useEffect(() => {
@@ -244,10 +247,13 @@ export default function ScanScreen() {
         createdAt: new Date().toISOString(),
       };
       
-      await addWarranty(newWarranty);
-      Alert.alert('Success', 'Warranty saved successfully!', [
-        { text: 'OK', onPress: () => router.push('/warranties') }
-      ]);
+      const shouldShowRating = await addWarranty(newWarranty);
+      
+      if (shouldShowRating && !hasRated) {
+        setShowRatingModal(true);
+      } else {
+        router.push('/warranties');
+      }
     } catch (error) {
       console.error('Error saving warranty:', error);
       Alert.alert('Error', 'Failed to save warranty. Please try again.');
@@ -589,6 +595,14 @@ export default function ScanScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <RatingModal
+        isVisible={showRatingModal}
+        onClose={() => {
+          setShowRatingModal(false);
+          router.push('/warranties');
+        }}
+      />
     </SafeAreaView>
   );
 }
