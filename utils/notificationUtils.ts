@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import * as FileSystem from 'expo-file-system';
 import { Warranty } from '../store/warrantyStore';
 
 // Storage implementation for web and native platforms
@@ -29,62 +30,23 @@ export async function scheduleDailyWarrantyCheck() {
   // Cancel any existing scheduled checks
   await Notifications.cancelAllScheduledNotificationsAsync();
 
-  // Get expiring warranties from storage
-  const storedWarranties = await storage.getItem('warranties');
-  const warranties: Warranty[] = storedWarranties ? JSON.parse(storedWarranties) : [];
-  
-  // Find warranties expiring soon (within 30 days)
-  const now = new Date();
-  const expiringWarranties = warranties.filter((warranty: Warranty) => {
-    if (!warranty.expiryDate) return false;
-    const expiryDate = new Date(warranty.expiryDate);
-    const diffTime = expiryDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 && diffDays <= 30;
-  });
-
-  // Schedule daily check at 9:00 AM
+  // Schedule daily check at 7:00 AM
   const trigger: Notifications.CalendarTriggerInput = {
-    hour: 14,
-    minute: 38,
+    hour: 7,
+    minute: 0,
     repeats: true,
     type: Notifications.SchedulableTriggerInputTypes.CALENDAR
   };
 
-  // If there are expiring warranties, include them in the notification
-  if (expiringWarranties.length > 0) {
-    const firstExpiring = expiringWarranties[0];
-    const imageUrl = firstExpiring.productImage || firstExpiring.receiptImage || 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=2070';
-
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: `Warranty Expiring: ${firstExpiring.productName}`,
-        body: expiringWarranties.length > 1 
-          ? `${firstExpiring.productName} and ${expiringWarranties.length - 1} other warranties are expiring soon`
-          : `Your ${firstExpiring.company} ${firstExpiring.productName} warranty is expiring soon`,
-        data: { warrantyId: firstExpiring.id },
-        attachments: Platform.OS === 'ios' ? [{
-          identifier: `warranty-${firstExpiring.id}-image`,
-          url: imageUrl,
-          type: 'image' as const
-        }] : undefined,
-        sound: true,
-        priority: Notifications.AndroidNotificationPriority.HIGH,
-      },
-      trigger,
-    });
-  } else {
-    // If no expiring warranties, schedule a simple check notification
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "No Expiring Warranties",
-        body: "All your warranties are up to date",
-        sound: false,
-        priority: Notifications.AndroidNotificationPriority.LOW,
-      },
-      trigger,
-    });
-  }
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Checking warranties...",
+      body: "Checking for warranties expiring tomorrow",
+      sound: false,
+      priority: Notifications.AndroidNotificationPriority.LOW,
+    },
+    trigger,
+  });
 }
 
 export async function checkAndScheduleWarrantyNotifications(warranties: Warranty[]) {
@@ -96,23 +58,35 @@ export async function checkAndScheduleWarrantyNotifications(warranties: Warranty
   await Notifications.cancelAllScheduledNotificationsAsync();
 
   const now = new Date();
-  
-  warranties.forEach(async (warranty: Warranty) => {
-    if (!warranty.expiryDate) return;
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
 
+  // Filter warranties expiring tomorrow
+  const expiringTomorrow = warranties.filter(warranty => {
+    if (!warranty.expiryDate) return false;
     const expiryDate = new Date(warranty.expiryDate);
-    const notificationDate = new Date(expiryDate);
-    notificationDate.setDate(notificationDate.getDate() - 5); // Start notifications 5 days before expiry
-    
-    // Only schedule if notification start date is in the future
-    if (notificationDate > now) {
+    expiryDate.setHours(0, 0, 0, 0);
+    return expiryDate.getTime() === tomorrow.getTime();
+  });
+
+  if (expiringTomorrow.length > 0) {
+    // Schedule notification for 7 AM today
+    const notificationDate = new Date();
+    notificationDate.setHours(7, 0, 0, 0);
+
+    // If it's past 7 AM today, schedule for tomorrow
+    if (now.getHours() >= 7) {
+      notificationDate.setDate(notificationDate.getDate() + 1);
+    }
+
+    for (const warranty of expiringTomorrow) {
       const imageUrl = warranty.productImage || warranty.receiptImage || 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=2070';
 
-      // Schedule initial notification for 5 days before expiry
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: `Warranty Expiring Soon: ${warranty.productName}`,
-          body: `Your ${warranty.company} ${warranty.productName} warranty will expire in 5 days`,
+          title: `Warranty Expiring Tomorrow: ${warranty.productName}`,
+          body: `Your ${warranty.company} ${warranty.productName} warranty will expire tomorrow`,
           data: { 
             warrantyId: warranty.id,
             productImage: imageUrl,
@@ -121,7 +95,7 @@ export async function checkAndScheduleWarrantyNotifications(warranties: Warranty
             expiryDate: warranty.expiryDate
           },
           attachments: Platform.OS === 'ios' ? [{
-            identifier: `warranty-${warranty.id}-image`,
+            identifier: `warranty-${warranty.id}-expiring-tomorrow`,
             url: imageUrl,
             type: 'image' as const
           }] : undefined,
@@ -134,48 +108,26 @@ export async function checkAndScheduleWarrantyNotifications(warranties: Warranty
           type: Notifications.SchedulableTriggerInputTypes.DATE
         },
       });
+    }
+  }
 
-      // Schedule daily reminders starting from notification date until expiry
-      const daysUntilExpiry = Math.ceil((expiryDate.getTime() - notificationDate.getTime()) / (1000 * 60 * 60 * 24));
-      
-      for (let i = daysUntilExpiry - 1; i > 0; i--) {
-        const reminderDate = new Date(expiryDate);
-        reminderDate.setDate(reminderDate.getDate() - i);
-        
-        if (reminderDate > now) {
-          await Notifications.scheduleNotificationAsync({
-            content: {
-              title: `Warranty Reminder: ${warranty.productName}`,
-              body: `Your ${warranty.company} ${warranty.productName} warranty will expire in ${i} day${i !== 1 ? 's' : ''}`,
-              data: { 
-                warrantyId: warranty.id,
-                productImage: imageUrl,
-                productName: warranty.productName,
-                company: warranty.company,
-                expiryDate: warranty.expiryDate
-              },
-              attachments: Platform.OS === 'ios' ? [{
-                identifier: `warranty-${warranty.id}-reminder-${i}`,
-                url: imageUrl,
-                type: 'image' as const
-              }] : undefined,
-              sound: true,
-              priority: Notifications.AndroidNotificationPriority.HIGH,
-              badge: 1,
-            },
-            trigger: {
-              date: reminderDate,
-              type: Notifications.SchedulableTriggerInputTypes.DATE
-            },
-          });
-        }
-      }
+  // Also schedule notifications for warranties expiring in the future
+  warranties.forEach(async (warranty: Warranty) => {
+    if (!warranty.expiryDate) return;
 
-      // Schedule expiry notification
+    const expiryDate = new Date(warranty.expiryDate);
+    const notificationDate = new Date(expiryDate);
+    notificationDate.setDate(notificationDate.getDate() - 1); // One day before expiry
+    notificationDate.setHours(7, 0, 0, 0); // At 7 AM
+    
+    // Only schedule if notification date is in the future
+    if (notificationDate > now) {
+      const imageUrl = warranty.productImage || warranty.receiptImage || 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=2070';
+
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: `Warranty Expired: ${warranty.productName}`,
-          body: `Your ${warranty.company} ${warranty.productName} warranty has expired today`,
+          title: `Warranty Expiring Tomorrow: ${warranty.productName}`,
+          body: `Your ${warranty.company} ${warranty.productName} warranty will expire tomorrow`,
           data: { 
             warrantyId: warranty.id,
             productImage: imageUrl,
@@ -184,7 +136,7 @@ export async function checkAndScheduleWarrantyNotifications(warranties: Warranty
             expiryDate: warranty.expiryDate
           },
           attachments: Platform.OS === 'ios' ? [{
-            identifier: `warranty-${warranty.id}-expired-image`,
+            identifier: `warranty-${warranty.id}-expiring-tomorrow`,
             url: imageUrl,
             type: 'image' as const
           }] : undefined,
@@ -193,7 +145,7 @@ export async function checkAndScheduleWarrantyNotifications(warranties: Warranty
           badge: 1,
         },
         trigger: {
-          date: expiryDate,
+          date: notificationDate,
           type: Notifications.SchedulableTriggerInputTypes.DATE
         },
       });

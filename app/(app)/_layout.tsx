@@ -1,7 +1,10 @@
 import { Stack } from 'expo-router';
 import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
-import { Chrome as Home, CirclePlus as PlusCircle, Receipt, Settings, User } from 'lucide-react-native';
+import { Chrome as Home, CirclePlus as PlusCircle, Receipt, Settings, User, Bell } from 'lucide-react-native';
+import Constants from 'expo-constants';
+
+const isDevelopment = __DEV__;
 
 export default function AppLayout() {
   return (
@@ -40,6 +43,15 @@ export default function AppLayout() {
           tabBarIcon: ({ color, size }) => <Receipt size={size} color={color} />,
         }}
       />
+      {isDevelopment && (
+        <Tabs.Screen
+          name="notification-test"
+          options={{
+            title: 'Test',
+            tabBarIcon: ({ color, size }) => <Bell size={size} color={color} />,
+          }}
+        />
+      )}
       <Tabs.Screen
         name="profile"
         options={{
