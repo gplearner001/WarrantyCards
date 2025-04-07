@@ -39,7 +39,7 @@ export default function RootLayout() {
           <Stack.Screen name="(app)" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
         </Stack>
-        <StatusBar style="auto" />
+        <StatusBar style="dark" />
       </AuthProvider>
     </GestureHandlerRootView>
   );

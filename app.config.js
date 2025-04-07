@@ -28,6 +28,19 @@ module.exports = {
         {
           "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to select receipt and product images."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification_icon_android.png",
+          "color": "#ffffff",
+          "defaultChannel": "default",
+          "sounds": [
+            "./assets/images/notification_sound.wav",
+            "./assets/images/notification_sound_other.wav"
+          ],
+          "enableBackgroundRemoteNotifications": false
+        }
       ]
     ],
     ios: {
@@ -35,9 +48,18 @@ module.exports = {
       infoPlist: {
         NSCameraUsageDescription: "This app needs access to your camera to scan receipts and capture product images",
         NSPhotoLibraryUsageDescription: "This app needs access to your photo library to select receipt and product images",
-        UIBackgroundModes: ["remote-notification"]
+        UIBackgroundModes: ["remote-notification"],
+        UIUserNotificationSettings: {
+          types: ["alert", "badge", "sound"],
+          defaultPresentationOptions: ["alert", "badge", "sound"]
+        }
       },
-      bundleIdentifier: "com.trackmyexpiry.app"
+      bundleIdentifier: "com.trackmyexpiry.app",
+      icon: "./assets/images/icon.png",
+      notification: {
+        icon: "./assets/images/notification_icon_ios.png",
+        color: "#ffffff"
+      }
     },
     android: {
       permissions: [
