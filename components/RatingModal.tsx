@@ -10,6 +10,8 @@ import {
   TouchableWithoutFeedback,
   InputAccessoryView,
   Keyboard,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Star } from 'lucide-react-native';
 import { useRatingStore } from '../store/ratingStore';
@@ -20,7 +22,7 @@ interface RatingModalProps {
 }
 
 export default function RatingModal({ isVisible, onClose }: RatingModalProps) {
-  const { setRating, setFeedback, markAsRated } = useRatingStore();
+  const { submitRating } = useRatingStore();
   const [selectedRating, setSelectedRating] = useState(0);
   const [feedbackText, setFeedbackText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,14 +33,14 @@ export default function RatingModal({ isVisible, onClose }: RatingModalProps) {
 
     setIsSubmitting(true);
     try {
-      setRating(selectedRating);
-      if (feedbackText.trim()) {
-        setFeedback(feedbackText.trim());
-      }
-      markAsRated();
-      onClose();
+      await submitRating(selectedRating, feedbackText.trim());
+      Alert.alert(
+        'Thank You!',
+        'Thanks for rating TrackMyExpiry app. Your feedback helps us improve!',
+        [{ text: 'OK', onPress: onClose }]
+      );
     } catch (error) {
-      console.error('Error submitting rating:', error);
+      Alert.alert('Error', 'Failed to submit rating. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -90,6 +92,7 @@ export default function RatingModal({ isVisible, onClose }: RatingModalProps) {
                 numberOfLines={4}
                 textAlignVertical="top"
                 inputAccessoryViewID={inputAccessoryViewID}
+                editable={!isSubmitting}
               />
 
               {Platform.OS === 'ios' && (
@@ -109,6 +112,7 @@ export default function RatingModal({ isVisible, onClose }: RatingModalProps) {
                 <TouchableOpacity
                   style={[styles.button, styles.cancelButton]}
                   onPress={onClose}
+                  disabled={isSubmitting}
                 >
                   <Text style={styles.cancelButtonText}>Maybe Later</Text>
                 </TouchableOpacity>
@@ -121,9 +125,11 @@ export default function RatingModal({ isVisible, onClose }: RatingModalProps) {
                   onPress={handleSubmit}
                   disabled={selectedRating === 0 || isSubmitting}
                 >
-                  <Text style={styles.submitButtonText}>
-                    {isSubmitting ? 'Submitting...' : 'Submit'}
-                  </Text>
+                  {isSubmitting ? (
+                    <ActivityIndicator color="#ffffff" />
+                  ) : (
+                    <Text style={styles.submitButtonText}>Submit</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>

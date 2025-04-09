@@ -40,6 +40,18 @@ interface WarrantiesResponse {
   warranties: Warranty[];
 }
 
+interface RatingResponse {
+  message: string;
+  ratingId: string;
+}
+
+interface RatingStatusResponse {
+  hasRated: boolean;
+  lastRatedAt: string | null;
+  rating: number | null;
+  feedback: string | null;
+}
+
 // Storage implementation
 const storage = {
   getItem: async (key: string): Promise<string | null> => {
@@ -210,6 +222,20 @@ export const warrantyApi = {
   async delete(warrantyId: string): Promise<void> {
     return apiRequest(`/api/warranty?warrantyId=${warrantyId}`, {
       method: 'DELETE'
+    });
+  }
+};
+
+// Rating API
+export const ratingApi = {
+  async getRatingStatus(): Promise<RatingStatusResponse> {
+    return apiRequest('/api/ratings');
+  },
+
+  async submitRating(data: { rating: number; feedback: string }): Promise<RatingResponse> {
+    return apiRequest('/api/ratings', {
+      method: 'POST',
+      body: JSON.stringify(data)
     });
   }
 };

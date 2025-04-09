@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,9 +16,9 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function RatingScreen() {
   const router = useRouter();
-  const { rating: savedRating, feedback: savedFeedback, setRating, setFeedback, markAsRated } = useRatingStore();
-  const [selectedRating, setSelectedRating] = useState(savedRating || 0);
-  const [feedbackText, setFeedbackText] = useState(savedFeedback || '');
+  const { submitRating } = useRatingStore();
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [feedbackText, setFeedbackText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -25,12 +26,8 @@ export default function RatingScreen() {
 
     setIsSubmitting(true);
     try {
-      setRating(selectedRating);
-      if (feedbackText.trim()) {
-        setFeedback(feedbackText.trim());
-      }
-      markAsRated();
-      router.back();
+      await submitRating(selectedRating, feedbackText.trim());
+      router.replace('/rating-success');
     } catch (error) {
       console.error('Error submitting rating:', error);
     } finally {
@@ -64,6 +61,7 @@ export default function RatingScreen() {
                 key={rating}
                 onPress={() => setSelectedRating(rating)}
                 style={styles.starButton}
+                disabled={isSubmitting}
               >
                 <Star
                   size={40}
@@ -86,6 +84,7 @@ export default function RatingScreen() {
             multiline
             numberOfLines={6}
             textAlignVertical="top"
+            editable={!isSubmitting}
           />
 
           <TouchableOpacity
@@ -96,9 +95,11 @@ export default function RatingScreen() {
             onPress={handleSubmit}
             disabled={selectedRating === 0 || isSubmitting}
           >
-            <Text style={styles.submitButtonText}>
-              {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
-            </Text>
+            {isSubmitting ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text style={styles.submitButtonText}>Submit Feedback</Text>
+            )}
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>

@@ -77,6 +77,12 @@ export default function AppLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="rating-success"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

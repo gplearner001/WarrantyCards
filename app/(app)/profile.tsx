@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,11 +13,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { Bell, CreditCard, CircleHelp as HelpCircle, LogOut, Settings, Shield, Star, User } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useRatingStore } from '../../store/ratingStore';
+import RatingModal from '../../components/RatingModal';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { logout, isSubscribed, toggleSubscription, user } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
+  const [showRatingModal, setShowRatingModal] = React.useState(false);
+  const { checkRatingStatus } = useRatingStore();
+
+  useEffect(() => {
+    checkRatingStatus();
+  }, []);
 
   const handleLogout = async () => {
     Alert.alert(
@@ -134,7 +142,7 @@ export default function ProfileScreen() {
           <View style={styles.settingsCard}>
             <TouchableOpacity 
               style={styles.settingRow}
-              onPress={() => router.push('/rating')}
+              onPress={() => setShowRatingModal(true)}
             >
               <View style={styles.settingLabelContainer}>
                 <Star size={22} color="#4361ee" style={styles.settingIcon} />
@@ -182,6 +190,11 @@ export default function ProfileScreen() {
           <Text style={styles.versionText}>TrackMyExpiry v1.0.0</Text>
         </View>
       </ScrollView>
+
+      <RatingModal
+        isVisible={showRatingModal}
+        onClose={() => setShowRatingModal(false)}
+      />
     </SafeAreaView>
   );
 }
