@@ -7,7 +7,7 @@ import { Warranty } from '../store/warrantyStore';
 const getApiUrl = () => {
   // For EAS builds, use the production URL
   if (Constants.appOwnership === 'expo' || Constants.appOwnership === 'standalone') {
-    return 'https://warranty-management-api.vercel.app'; // Replace with your actual production API URL
+    return 'https://warranty-management-api.vercel.app';
   }
   
   // For development
@@ -45,11 +45,12 @@ interface RatingResponse {
   ratingId: string;
 }
 
-interface RatingStatusResponse {
-  hasRated: boolean;
-  lastRatedAt: string | null;
-  rating: number | null;
+interface Rating {
+  rating_id: string;
+  rating: number;
   feedback: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // Storage implementation
@@ -228,7 +229,7 @@ export const warrantyApi = {
 
 // Rating API
 export const ratingApi = {
-  async getRatingStatus(): Promise<RatingStatusResponse> {
+  async getRatingStatus(): Promise<Rating> {
     return apiRequest('/api/ratings');
   },
 

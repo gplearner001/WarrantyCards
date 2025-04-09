@@ -248,8 +248,8 @@ export default function ScanScreen() {
       };
       
       const shouldShowRating = await addWarranty(newWarranty);
-      
-      if (shouldShowRating && !hasRated) {
+     
+      if (shouldShowRating) {
         setShowRatingModal(true);
       } else {
         router.push('/warranties');

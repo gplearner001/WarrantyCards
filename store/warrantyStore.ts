@@ -3,8 +3,7 @@ import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import * as FileSystem from 'expo-file-system';
 import { checkAndScheduleWarrantyNotifications } from '../utils/notificationUtils';
-import { warrantyApi } from '../utils/api';
-import { useRatingStore } from './ratingStore';
+import { warrantyApi, ratingApi } from '../utils/api';
 
 export type Warranty = {
   id: string;
@@ -151,7 +150,7 @@ export const useWarrantyStore = create<WarrantyState>((set, get) => ({
         productImage: productImageBase64,
       };
 
-      const response = await warrantyApi.create(payload);
+      await warrantyApi.create(payload);
       const currentWarranties = get().warranties;
       const updatedWarranties = [...currentWarranties, warranty];
       
@@ -161,12 +160,15 @@ export const useWarrantyStore = create<WarrantyState>((set, get) => ({
         await checkAndScheduleWarrantyNotifications(updatedWarranties);
       }
 
-      // Increment warranty count in rating store
-      const ratingStore = useRatingStore.getState();
-      ratingStore.incrementWarrantyCount();
-
-      // Return whether to show rating prompt
-      return ratingStore.shouldShowRatingPrompt();
+      // Check rating status directly from the API
+      try {
+        const response = await ratingApi.getRatingStatus();
+        // If response has rating_id, it means user has already rated
+        return !response || !response.rating_id;
+      } catch (error) {
+        console.error('Error checking rating status:', error);
+        return false;
+      }
     } catch (error: any) {
       console.error('Error adding warranty:', error);
       set({ 

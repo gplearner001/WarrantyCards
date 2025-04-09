@@ -21,6 +21,14 @@ interface RatingState {
   checkRatingStatus: () => Promise<void>;
 }
 
+interface RatingResponse {
+  rating_id: string;
+  rating: number;
+  feedback: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 const storage = {
   getItem: async (key: string): Promise<string | null> => {
     if (Platform.OS === 'web') {
@@ -37,6 +45,7 @@ const storage = {
   },
 };
 
+// Create and export the store
 export const useRatingStore = create<RatingState>((set, get) => ({
   lastRatingDate: null,
   warrantyCountSinceLastRating: 0,
@@ -78,25 +87,38 @@ export const useRatingStore = create<RatingState>((set, get) => ({
 
   shouldShowRatingPrompt: () => {
     const state = get();
-    if (state.hasRated) {
-      return (state.warrantyCountSinceLastRating % 2) == 0;
-    }
-    return state.warrantyCountSinceLastRating > 0;
+    return !state.hasRated && state.warrantyCountSinceLastRating > 0;
   },
 
   checkRatingStatus: async () => {
     try {
       const response = await ratingApi.getRatingStatus();
-      set({ 
-        hasRated: response.hasRated,
-        lastRatingDate: response.lastRatedAt || null,
-        rating: response.rating || null,
-        feedback: response.feedback || null
-      });
+      const ratingData = response as RatingResponse;
+      
+      if (ratingData && ratingData.rating_id) {
+        set({ 
+          hasRated: true,
+          lastRatingDate: ratingData.created_at,
+          rating: ratingData.rating,
+          feedback: ratingData.feedback
+        });
+      } else {
+        set({ 
+          hasRated: false,
+          lastRatingDate: null,
+          rating: null,
+          feedback: null
+        });
+      }
     } catch (error) {
       console.error('Error checking rating status:', error);
       // If API fails, fallback to default state
-      set({ hasRated: false, lastRatingDate: null, rating: null, feedback: null });
+      set({ 
+        hasRated: false, 
+        lastRatingDate: null, 
+        rating: null, 
+        feedback: null 
+      });
     }
   },
 
@@ -104,7 +126,13 @@ export const useRatingStore = create<RatingState>((set, get) => ({
     set({ isSubmitting: true, error: null });
     try {
       await ratingApi.submitRating({ rating, feedback });
-      set({ isSubmitting: false });
+      set({ 
+        isSubmitting: false,
+        hasRated: true,
+        rating,
+        feedback: feedback || null,
+        lastRatingDate: new Date().toISOString()
+      });
       get().markAsRated();
       // Refresh rating status after submission
       await get().checkRatingStatus();
