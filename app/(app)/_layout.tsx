@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
-import { Chrome as Home, CirclePlus as PlusCircle, Receipt, Settings, User, Bell } from 'lucide-react-native';
+import { Chrome as Home, CirclePlus as PlusCircle, Receipt, Settings, User, Bell, ShoppingCart } from 'lucide-react-native';
 import Constants from 'expo-constants';
 
 const isDevelopment = __DEV__;
@@ -41,6 +41,13 @@ export default function AppLayout() {
         options={{
           title: 'Warranties',
           tabBarIcon: ({ color, size }) => <Receipt size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="groceries"
+        options={{
+          title: 'Groceries',
+          tabBarIcon: ({ color, size }) => <ShoppingCart size={size} color={color} />,
         }}
       />
       {isDevelopment && (

@@ -10,18 +10,24 @@ import {
   Share,
   Platform,
   Linking,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle,
+  ImageStyle,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWarrantyStore } from '../../store/warrantyStore';
+import { useGroceryStore } from '../../store/groceryStore';
 import { formatDate } from '../../utils/dateUtils';
-import { ArrowLeft, Clock, Download, Info, Share2, ShoppingBag, Store, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Clock, Download, Info, Share2, ShoppingBag, Store, Trash2, ShoppingCart } from 'lucide-react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 export default function WarrantyDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { warranties, deleteWarranty } = useWarrantyStore();
+  const { addToGroceryList, isLoading: isAddingToGrocery } = useGroceryStore();
   const [warranty, setWarranty] = useState<any>(null);
 
   useEffect(() => {
@@ -54,6 +60,19 @@ export default function WarrantyDetailScreen() {
     );
   };
 
+  const handleAddToGroceryList = async () => {
+    try {
+      await addToGroceryList(warranty.id);
+      Alert.alert(
+        'Success',
+        'Item added to grocery list',
+        [{ text: 'OK', onPress: () => router.push('/groceries') }]
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to add item to grocery list');
+    }
+  };
+
   const handleShare = async () => {
     if (!warranty) return;
 
@@ -75,10 +94,8 @@ export default function WarrantyDetailScreen() {
     if (!warranty?.receiptImage) return;
 
     if (Platform.OS === 'web') {
-      // For web, open the image in a new tab
       window.open(warranty.receiptImage, '_blank');
     } else {
-      // For mobile, open the image URL
       try {
         await Linking.openURL(warranty.receiptImage);
       } catch (error) {
@@ -90,7 +107,7 @@ export default function WarrantyDetailScreen() {
 
   if (!warranty) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <ArrowLeft size={24} color="#212529" />
@@ -114,7 +131,7 @@ export default function WarrantyDetailScreen() {
   })();
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <ArrowLeft size={24} color="#212529" />
@@ -226,6 +243,21 @@ export default function WarrantyDetailScreen() {
               <Trash2 size={20} color="#dc3545" />
               <Text style={styles.deleteButtonText}>Delete</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, styles.groceryButton]}
+              onPress={handleAddToGroceryList}
+              disabled={isAddingToGrocery}
+            >
+              {isAddingToGrocery ? (
+                <ActivityIndicator color="#4361ee" />
+              ) : (
+                <>
+                  <ShoppingCart size={20} color="#4361ee" />
+                  <Text style={styles.groceryButtonText}>Add to Grocery List</Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
         </Animated.View>
       </ScrollView>
@@ -233,7 +265,43 @@ export default function WarrantyDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+type Style = {
+  container: ViewStyle;
+  header: ViewStyle;
+  backButton: ViewStyle;
+  headerTitle: TextStyle;
+  shareButton: ViewStyle;
+  loadingContainer: ViewStyle;
+  loadingText: TextStyle;
+  imageContainer: ViewStyle;
+  productImage: ImageStyle;
+  expiryBadge: ViewStyle;
+  expiryBadgeText: TextStyle;
+  contentContainer: ViewStyle;
+  productName: TextStyle;
+  companyName: TextStyle;
+  detailsContainer: ViewStyle;
+  detailRow: ViewStyle;
+  detailIconContainer: ViewStyle;
+  detailTextContainer: ViewStyle;
+  detailLabel: TextStyle;
+  detailValue: TextStyle;
+  expiringText: TextStyle;
+  receiptContainer: ViewStyle;
+  receiptHeader: ViewStyle;
+  receiptTitle: TextStyle;
+  downloadButton: ViewStyle;
+  downloadButtonText: TextStyle;
+  receiptImage: ImageStyle;
+  actionButtons: ViewStyle;
+  actionButton: ViewStyle;
+  deleteButton: ViewStyle;
+  deleteButtonText: TextStyle;
+  groceryButton: ViewStyle;
+  groceryButtonText: TextStyle;
+};
+
+const styles = StyleSheet.create<Style>({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
@@ -389,7 +457,7 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
   },
   actionButton: {
     flexDirection: 'row',
@@ -402,9 +470,20 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     backgroundColor: '#fff1f1',
+    marginRight: 8,
   },
   deleteButtonText: {
     color: '#dc3545',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  groceryButton: {
+    backgroundColor: '#e9efff',
+    marginLeft: 8,
+  },
+  groceryButtonText: {
+    color: '#4361ee',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,

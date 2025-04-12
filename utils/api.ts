@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { Warranty } from '../store/warrantyStore';
+import { GroceryItem } from '../store/groceryStore';
 
 // Get the API URL based on the environment
 const getApiUrl = () => {
@@ -237,6 +238,26 @@ export const ratingApi = {
     return apiRequest('/api/ratings', {
       method: 'POST',
       body: JSON.stringify(data)
+    });
+  }
+};
+
+// Grocery API
+export const groceryApi = {
+  async getAll(): Promise<GroceryItem[]> {
+    return apiRequest('/api/groceries');
+  },
+
+  async create(data: { warrantyId: string; quantity: number; notes?: string }): Promise<void> {
+    return apiRequest('/api/groceries', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  },
+
+  async delete(groceryId: string): Promise<void> {
+    return apiRequest(`/api/groceries?groceryId=${groceryId}`, {
+      method: 'DELETE'
     });
   }
 };
