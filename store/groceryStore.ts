@@ -5,6 +5,7 @@ import { groceryApi } from '../utils/api';
 import { Warranty } from './warrantyStore';
 
 export interface GroceryItem {
+  grocery_id: string;
   id: string;
   warrantyId: string;
   quantity: number;

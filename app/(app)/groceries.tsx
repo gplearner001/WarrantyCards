@@ -32,6 +32,11 @@ export default function GroceriesScreen() {
   }, [fetchGroceries]);
 
   const handleDelete = (groceryId: string) => {
+    if (!groceryId) {
+      console.error('No grocery ID provided for deletion');
+      return;
+    }
+
     Alert.alert(
       'Remove from Grocery List',
       'Are you sure you want to remove this item from your grocery list?',
@@ -43,6 +48,8 @@ export default function GroceriesScreen() {
           onPress: async () => {
             try {
               await removeFromGroceryList(groceryId);
+              // After successful deletion, refresh the groceries list
+              await fetchGroceries();
             } catch (error) {
               Alert.alert('Error', 'Failed to remove item from grocery list');
             }
@@ -86,7 +93,7 @@ export default function GroceriesScreen() {
               </Text>
               <TouchableOpacity
                 style={styles.deleteButton}
-                onPress={() => handleDelete(item.id)}
+                onPress={() => handleDelete(item.grocery_id)}
               >
                 <Trash2 size={16} color="#dc3545" />
               </TouchableOpacity>
@@ -106,7 +113,7 @@ export default function GroceriesScreen() {
       <FlatList
         data={groceries}
         renderItem={renderGroceryItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.grocery_id}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
         refreshControl={
