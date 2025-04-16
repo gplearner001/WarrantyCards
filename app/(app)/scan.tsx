@@ -19,12 +19,13 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useWarrantyStore } from '../../store/warrantyStore';
-import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimated';
-import { Camera as CameraIcon, Image as ImageIcon, QrCode, X, Check, ArrowLeft, Building2, ShoppingBag, Clock, Info, Loader as Loader2, Calendar, Bell } from 'lucide-react-native';
-import { performOcr, ExtractedWarrantyData } from '../../utils/ocrUtils';
 import { formatDate } from '../../utils/dateUtils';
+import { Camera as CameraIcon, Image as ImageIcon, QrCode, X, Check, ArrowLeft, Building2, ShoppingBag, Clock, Info, Loader as Loader2, Calendar, Bell } from 'lucide-react-native';
+import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimated';
+import { performOcr, ExtractedWarrantyData } from '../../utils/ocrUtils';
 import { useRatingStore } from '../../store/ratingStore';
 import RatingModal from '../../components/RatingModal';
+import { t } from '../../utils/i18n';
 
 export default function ScanScreen() {
   const router = useRouter();
@@ -298,7 +299,7 @@ export default function ScanScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4361ee" />
-          <Text style={styles.loadingText}>Requesting camera permission...</Text>
+          <Text style={styles.loadingText}>{t('requestingCameraPermission')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -308,15 +309,15 @@ export default function ScanScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.permissionContainer}>
-          <Text style={styles.permissionText}>No access to camera</Text>
+          <Text style={styles.permissionText}>{t('noCameraAccess')}</Text>
           <Text style={styles.permissionSubtext}>
-            Please enable camera permissions in your device settings to use this feature.
+            {t('enableCameraPermissions')}
           </Text>
           <TouchableOpacity
             style={styles.permissionButton}
             onPress={() => router.back()}
           >
-            <Text style={styles.permissionButtonText}>Go Back</Text>
+            <Text style={styles.permissionButtonText}>{t('goBack')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -348,8 +349,8 @@ export default function ScanScreen() {
                 <ArrowLeft size={24} color="#ffffff" />
               </TouchableOpacity>
               <Text style={styles.cameraTitle}>
-                {scanMode === 'receipt' ? 'Scan Receipt' : 
-                 scanMode === 'product' ? 'Capture Product' : 'Scan Barcode'}
+                {scanMode === 'receipt' ? t('scanReceipt') : 
+                 scanMode === 'product' ? t('captureProduct') : t('scanBarcode')}
               </Text>
               <View style={{ width: 40 }} />
             </View>
@@ -366,7 +367,7 @@ export default function ScanScreen() {
             {isProcessingBarcode && (
               <View style={styles.processingOverlay}>
                 <ActivityIndicator size="large" color="#ffffff" />
-                <Text style={styles.processingText}>Fetching product info...</Text>
+                <Text style={styles.processingText}>{t('fetchingProductInfo')}</Text>
               </View>
             )}
 
@@ -393,7 +394,7 @@ export default function ScanScreen() {
       >
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <Text style={styles.title}>Add Warranty</Text>
+            <Text style={styles.title}>{t('addWarranty')}</Text>
           </View>
 
           {isProcessing ? (
@@ -402,28 +403,28 @@ export default function ScanScreen() {
               style={styles.processingContainer}
             >
               <ActivityIndicator size="large" color="#4361ee" />
-              <Text style={styles.processingText}>Processing image...</Text>
-              <Text style={styles.processingSubtext}>Extracting warranty information using OCR</Text>
+              <Text style={styles.processingText}>{t('processingImage')}</Text>
+              <Text style={styles.processingSubtext}>{t('extractingInfo')}</Text>
             </Animated.View>
           ) : (
             <>
               <Animated.View entering={FadeInDown.duration(800).delay(200)}>
                 <View style={styles.captureSection}>
-                  <Text style={styles.sectionTitle}>Receipt Image (Optional)</Text>
+                  <Text style={styles.sectionTitle}>{t('receiptImage')} ({t('optional')})</Text>
                   <View style={styles.captureOptions}>
                     <TouchableOpacity
                       style={styles.captureOption}
                       onPress={() => startCamera('receipt')}
                     >
                       <CameraIcon size={24} color="#4361ee" />
-                      <Text style={styles.captureOptionText}>Camera</Text>
+                      <Text style={styles.captureOptionText}>{t('camera')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.captureOption}
                       onPress={() => pickImage('receipt')}
                     >
                       <ImageIcon size={24} color="#4361ee" />
-                      <Text style={styles.captureOptionText}>Gallery</Text>
+                      <Text style={styles.captureOptionText}>{t('gallery')}</Text>
                     </TouchableOpacity>
                   </View>
 
@@ -443,28 +444,28 @@ export default function ScanScreen() {
 
               <Animated.View entering={FadeInDown.duration(800).delay(300)}>
                 <View style={styles.captureSection}>
-                  <Text style={styles.sectionTitle}>Product Image *</Text>
+                  <Text style={styles.sectionTitle}>{t('productImage')} *</Text>
                   <View style={styles.captureOptions}>
                     <TouchableOpacity
                       style={styles.captureOption}
                       onPress={() => startCamera('product')}
                     >
                       <CameraIcon size={24} color="#4361ee" />
-                      <Text style={styles.captureOptionText}>Camera</Text>
+                      <Text style={styles.captureOptionText}>{t('camera')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.captureOption}
                       onPress={() => pickImage('product')}
                     >
                       <ImageIcon size={24} color="#4361ee" />
-                      <Text style={styles.captureOptionText}>Gallery</Text>
+                      <Text style={styles.captureOptionText}>{t('gallery')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.captureOption}
                       onPress={() => startCamera('qr')}
                     >
                       <QrCode size={24} color="#4361ee" />
-                      <Text style={styles.captureOptionText}>Scan Barcode</Text>
+                      <Text style={styles.captureOptionText}>{t('scanBarcode')}</Text>
                     </TouchableOpacity>
                   </View>
 
@@ -475,7 +476,7 @@ export default function ScanScreen() {
                         style={styles.removeImageButton}
                         onPress={() => {
                           setProductImage(null);
-                          setValidationError('Product image is required. Please add a product image or scan barcode on product.');
+                          setValidationError(t('productImageRequired'));
                         }}
                       >
                         <X size={20} color="#ffffff" />
@@ -487,7 +488,7 @@ export default function ScanScreen() {
 
               <Animated.View entering={FadeInDown.duration(800).delay(400)}>
                 <View style={styles.formSection}>
-                  <Text style={styles.sectionTitle}>Warranty Details</Text>
+                  <Text style={styles.sectionTitle}>{t('warrantyDetails')}</Text>
 
                   {validationError && (
                     <View style={styles.errorContainer}>
@@ -501,7 +502,7 @@ export default function ScanScreen() {
                     </View>
                     <TextInput
                       style={[styles.input, !productName && styles.inputPlaceholder]}
-                      placeholder="Product Name *"
+                      placeholder={`${t('productName')} *`}
                       placeholderTextColor="#adb5bd"
                       value={productName}
                       onChangeText={setProductName}
@@ -514,7 +515,7 @@ export default function ScanScreen() {
                     </View>
                     <TextInput
                       style={[styles.input, !company && styles.inputPlaceholder]}
-                      placeholder="Company/Brand *"
+                      placeholder={`${t('company')} *`}
                       placeholderTextColor="#adb5bd"
                       value={company}
                       onChangeText={setCompany}
@@ -533,7 +534,7 @@ export default function ScanScreen() {
                         styles.datePickerText,
                         !expiryDate && { color: '#adb5bd' }
                       ]}>
-                        {expiryDate ? formatDate(expiryDate) : 'Select Expiry Date'}
+                        {expiryDate ? formatDate(expiryDate) : t('selectExpiryDate')}
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -544,7 +545,7 @@ export default function ScanScreen() {
                     </View>
                     <TextInput
                       style={[styles.input, !notificationDays && styles.inputPlaceholder]}
-                      placeholder="Notification days before expiry"
+                      placeholder={t('notificationDays')}
                       placeholderTextColor="#adb5bd"
                       value={notificationDays}
                       onChangeText={(text) => {
@@ -555,7 +556,7 @@ export default function ScanScreen() {
                     />
                   </View>
                   <Text style={styles.helperText}>
-                    Enter how many days before expiry you want to be notified. For perishable items like groceries, you might want to set this to 1-2 days. For longer-term warranties, consider 7-30 days for advance notice.
+                    {t('notificationDaysHelper')}
                   </Text>
 
                   {showDatePicker && (
@@ -575,7 +576,7 @@ export default function ScanScreen() {
                           style={styles.datePickerDoneButton}
                           onPress={hideDatePicker}
                         >
-                          <Text style={styles.datePickerDoneButtonText}>Done</Text>
+                          <Text style={styles.datePickerDoneButtonText}>{t('done')}</Text>
                         </TouchableOpacity>
                       )}
                     </View>
@@ -587,7 +588,7 @@ export default function ScanScreen() {
                     </View>
                     <TextInput
                       style={[styles.input, styles.textArea, !additionalInfo && styles.inputPlaceholder]}
-                      placeholder="Additional Information"
+                      placeholder={t('additionalInfo')}
                       placeholderTextColor="#adb5bd"
                       value={additionalInfo}
                       onChangeText={setAdditionalInfo}
@@ -605,7 +606,7 @@ export default function ScanScreen() {
                   disabled={isSaving}
                 >
                   <X size={20} color="#dc3545" />
-                  <Text style={styles.resetButtonText}>Reset</Text>
+                  <Text style={styles.resetButtonText}>{t('resetForm')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={styles.saveButton} 
@@ -618,7 +619,7 @@ export default function ScanScreen() {
                     <Check size={20} color="#ffffff" />
                   )}
                   <Text style={styles.saveButtonText}>
-                    {isSaving ? 'Saving...' : 'Save Warranty'}
+                    {isSaving ? t('savingWarranty') : t('saveWarranty')}
                   </Text>
                 </TouchableOpacity>
               </Animated.View>

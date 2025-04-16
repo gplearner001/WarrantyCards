@@ -27,6 +27,8 @@ const translations = {
     success: 'Success',
     remove: 'Remove',
     quantity: 'Quantity',
+    required: 'Required',
+    optional: 'Optional',
     
     // Auth
     login: 'Login',
@@ -75,7 +77,7 @@ const translations = {
     deleteWarrantyConfirm: 'Are you sure you want to delete this warranty?',
     addToGroceryList: 'Add to Grocery List',
     
-    // Scan
+    // Add Warranty
     addWarranty: 'Add Warranty',
     camera: 'Camera',
     gallery: 'Gallery',
@@ -86,6 +88,35 @@ const translations = {
     extractingInfo: 'Extracting warranty information using OCR',
     notificationDays: 'Notification days before expiry',
     notificationDaysHelper: 'Enter how many days before expiry you want to be notified. For perishable items like groceries, you might want to set this to 1-2 days. For longer-term warranties, consider 7-30 days for advance notice.',
+    selectExpiryDate: 'Select Expiry Date',
+    resetForm: 'Reset Form',
+    saveWarranty: 'Save Warranty',
+    savingWarranty: 'Saving...',
+    productImageRequired: 'Product image is required. Please add a product image or scan barcode on product.',
+    fillRequiredFields: 'Please fill in all required fields: Product Name and Company.',
+    scanningBarcode: 'Scanning barcode...',
+    fetchingProductInfo: 'Fetching product info...',
+    productNotFound: 'Product not found',
+    invalidBarcode: 'Invalid barcode',
+    scanValidBarcode: 'Please scan a valid product barcode.',
+    requestingCameraPermission: 'Requesting camera permission...',
+    noCameraAccess: 'No access to camera',
+    enableCameraPermissions: 'Please enable camera permissions in your device settings to use this feature.',
+    goBack: 'Go Back',
+    
+    // My Warranties
+    myWarranties: 'My Warranties',
+    searchWarranties: 'Search warranties...',
+    recent: 'Recent',
+    name: 'Name',
+    expiry: 'Expiry',
+    expiring: 'Expiring',
+    noWarrantiesMatch: 'No warranties match your search',
+    noWarrantiesExpiring: 'No warranties expiring soon',
+    noWarrantiesAdded: 'No warranties added yet',
+    addFirstWarranty: 'Add your first warranty',
+    expired: 'Expired',
+    valid: 'Valid until',
     
     // Profile
     settings: 'Settings',
@@ -123,6 +154,8 @@ const translations = {
     success: 'सफलता',
     remove: 'हटाएं',
     quantity: 'मात्रा',
+    required: 'आवश्यक',
+    optional: 'वैकल्पिक',
     
     // Auth
     login: 'लॉग इन',
@@ -171,7 +204,7 @@ const translations = {
     deleteWarrantyConfirm: 'क्या आप वाकई इस वारंटी को हटाना चाहते हैं?',
     addToGroceryList: 'किराना सूची में जोड़ें',
     
-    // Scan
+    // Add Warranty
     addWarranty: 'वारंटी जोड़ें',
     camera: 'कैमरा',
     gallery: 'गैलरी',
@@ -182,6 +215,35 @@ const translations = {
     extractingInfo: 'OCR का उपयोग करके वारंटी जानकारी निकाली जा रही है',
     notificationDays: 'समाप्ति से पहले सूचना दिन',
     notificationDaysHelper: 'दर्ज करें कि आप समाप्ति से कितने दिन पहले सूचित होना चाहते हैं। नाशवान वस्तुओं जैसे किराने का सामान के लिए, आप इसे 1-2 दिन पर सेट कर सकते हैं। लंबी अवधि की वारंटी के लिए, अग्रिम सूचना के लिए 7-30 दिन पर विचार करें।',
+    selectExpiryDate: 'समाप्ति तिथि चुनें',
+    resetForm: 'फॉर्म रीसेट करें',
+    saveWarranty: 'वारंटी सहेजें',
+    savingWarranty: 'सहेजा जा रहा है...',
+    productImageRequired: 'उत्पाद की छवि आवश्यक है। कृपया उत्पाद की छवि जोड़ें या उत्पाद पर बारकोड स्कैन करें।',
+    fillRequiredFields: 'कृपया सभी आवश्यक फ़ील्ड भरें: उत्पाद का नाम और कंपनी।',
+    scanningBarcode: 'बारकोड स्कैन किया जा रहा है...',
+    fetchingProductInfo: 'उत्पाद की जानकारी प्राप्त की जा रही है...',
+    productNotFound: 'उत्पाद नहीं मिला',
+    invalidBarcode: 'अमान्य बारकोड',
+    scanValidBarcode: 'कृपया एक वैध उत्पाद बारकोड स्कैन करें।',
+    requestingCameraPermission: 'कैमरा अनुमति का अनुरोध किया जा रहा है...',
+    noCameraAccess: 'कैमरा तक पहुंच नहीं है',
+    enableCameraPermissions: 'इस सुविधा का उपयोग करने के लिए कृपया अपनी डिवाइस सेटिंग्स में कैमरा अनुमतियां सक्षम करें।',
+    goBack: 'वापस जाएं',
+    
+    // My Warranties
+    myWarranties: 'मेरी वारंटी',
+    searchWarranties: 'वारंटी खोजें...',
+    recent: 'हाल का',
+    name: 'नाम',
+    expiry: 'समाप्ति',
+    expiring: 'समाप्त हो रहा है',
+    noWarrantiesMatch: 'कोई वारंटी आपकी खोज से मेल नहीं खाती',
+    noWarrantiesExpiring: 'कोई वारंटी जल्द समाप्त नहीं हो रही',
+    noWarrantiesAdded: 'कोई वारंटी नहीं जोड़ी गई',
+    addFirstWarranty: 'अपनी पहली वारंटी जोड़ें',
+    expired: 'समाप्त हो गया',
+    valid: 'तक मान्य',
     
     // Profile
     settings: 'सेटिंग्स',
@@ -219,6 +281,8 @@ const translations = {
     success: 'Succes',
     remove: 'Elimină',
     quantity: 'Cantitate',
+    required: 'Obligatoriu',
+    optional: 'Opțional',
     
     // Auth
     login: 'Autentificare',
@@ -267,7 +331,7 @@ const translations = {
     deleteWarrantyConfirm: 'Ești sigur că vrei să ștergi această garanție?',
     addToGroceryList: 'Adaugă la lista de cumpărături',
     
-    // Scan
+    // Add Warranty
     addWarranty: 'Adaugă garanție',
     camera: 'Cameră',
     gallery: 'Galerie',
@@ -278,6 +342,35 @@ const translations = {
     extractingInfo: 'Se extrag informațiile din garanție folosind OCR',
     notificationDays: 'Zile de notificare înainte de expirare',
     notificationDaysHelper: 'Introdu cu câte zile înainte de expirare dorești să fii notificat. Pentru produse perisabile precum alimentele, poți seta 1-2 zile. Pentru garanții pe termen lung, consideră 7-30 zile pentru notificare în avans.',
+    selectExpiryDate: 'Selectează data expirării',
+    resetForm: 'Resetează formularul',
+    saveWarranty: 'Salvează garanția',
+    savingWarranty: 'Se salvează...',
+    productImageRequired: 'Imaginea produsului este obligatorie. Te rugăm să adaugi o imagine sau să scanezi codul de bare al produsului.',
+    fillRequiredFields: 'Te rugăm să completezi toate câmpurile obligatorii: Numele produsului și Compania.',
+    scanningBarcode: 'Se scanează codul de bare...',
+    fetchingProductInfo: 'Se obțin informațiile produsului...',
+    productNotFound: 'Produsul nu a fost găsit',
+    invalidBarcode: 'Cod de bare invalid',
+    scanValidBarcode: 'Te rugăm să scanezi un cod de bare valid.',
+    requestingCameraPermission: 'Se solicită permisiunea pentru cameră...',
+    noCameraAccess: 'Nu există acces la cameră',
+    enableCameraPermissions: 'Te rugăm să activezi permisiunile pentru cameră în setările dispozitivului pentru a utiliza această funcție.',
+    goBack: 'Înapoi',
+    
+    // My Warranties
+    myWarranties: 'Garanțiile mele',
+    searchWarranties: 'Caută garanții...',
+    recent: 'Recent',
+    name: 'Nume',
+    expiry: 'Expirare',
+    expiring: 'Expiră curând',
+    noWarrantiesMatch: 'Nicio garanție nu corespunde căutării tale',
+    noWarrantiesExpiring: 'Nu există garanții care expiră curând',
+    noWarrantiesAdded: 'Nu ai adăugat nicio garanție',
+    addFirstWarranty: 'Adaugă prima ta garanție',
+    expired: 'Expirat',
+    valid: 'Valabil până la',
     
     // Profile
     settings: 'Setări',
@@ -315,6 +408,8 @@ const translations = {
     success: 'Succès',
     remove: 'Retirer',
     quantity: 'Quantité',
+    required: 'Obligatoire',
+    optional: 'Optionnel',
     
     // Auth
     login: 'Connexion',
@@ -363,7 +458,7 @@ const translations = {
     deleteWarrantyConfirm: 'Êtes-vous sûr de vouloir supprimer cette garantie ?',
     addToGroceryList: 'Ajouter à la liste de courses',
     
-    // Scan
+    // Add Warranty
     addWarranty: 'Ajouter une garantie',
     camera: 'Appareil photo',
     gallery: 'Galerie',
@@ -374,6 +469,35 @@ const translations = {
     extractingInfo: 'Extraction des informations de garantie avec OCR',
     notificationDays: "Jours de notification avant l'expiration",
     notificationDaysHelper: "Entrez le nombre de jours avant l'expiration où vous souhaitez être notifié. Pour les produits périssables comme les courses, vous pouvez définir 1-2 jours. Pour les garanties à long terme, considérez 7-30 jours pour une notification anticipée.",
+    selectExpiryDate: "Sélectionner la date d'expiration",
+    resetForm: 'Réinitialiser le formulaire',
+    saveWarranty: 'Enregistrer la garantie',
+    savingWarranty: 'Enregistrement...',
+    productImageRequired: "L'image du produit est requise. Veuillez ajouter une image ou scanner le code-barres du produit.",
+    fillRequiredFields: 'Veuillez remplir tous les champs obligatoires : Nom du produit et Société.',
+    scanningBarcode: 'Scan du code-barres...',
+    fetchingProductInfo: 'Récupération des informations du produit...',
+    productNotFound: 'Produit non trouvé',
+    invalidBarcode: 'Code-barres invalide',
+    scanValidBarcode: 'Veuillez scanner un code-barres de produit valide.',
+    requestingCameraPermission: "Demande d'autorisation de la caméra...",
+    noCameraAccess: "Pas d'accès à la caméra",
+    enableCameraPermissions: 'Veuillez activer les autorisations de la caméra dans les paramètres de votre appareil pour utiliser cette fonction.',
+    goBack: 'Retour',
+    
+    // My Warranties
+    myWarranties: 'Mes garanties',
+    searchWarranties: 'Rechercher des garanties...',
+    recent: 'Récent',
+    name: 'Nom',
+    expiry: 'Expiration',
+    expiring: 'Expire bientôt',
+    noWarrantiesMatch: 'Aucune garantie ne correspond à votre recherche',
+    noWarrantiesExpiring: "Aucune garantie n'expire bientôt",
+    noWarrantiesAdded: "Vous n'avez pas encore ajouté de garantie",
+    addFirstWarranty: 'Ajoutez votre première garantie',
+    expired: 'Expiré',
+    valid: "Valable jusqu'au",
     
     // Profile
     settings: 'Paramètres',
@@ -440,7 +564,7 @@ export const useLanguageStore = create<LanguageState>((set) => ({
     set({ language: code });
   },
   initialize: async () => {
-    const savedLanguage = await storage.getItem('language');
+    const savedLanguage =  await storage.getItem('language');
     if (savedLanguage && Object.keys(LANGUAGES).includes(savedLanguage)) {
       i18n.locale = savedLanguage as LanguageCode;
       set({ language: savedLanguage as LanguageCode });

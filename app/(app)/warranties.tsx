@@ -18,6 +18,7 @@ import { useGroceryStore } from '../../store/groceryStore';
 import { formatDistanceToNow, formatDate } from '../../utils/dateUtils';
 import { Clock, Filter, Search, Dessert as SortDesc, ShoppingCart } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { t } from '../../utils/i18n';
 
 export default function WarrantiesScreen() {
   const router = useRouter();
@@ -44,22 +45,22 @@ export default function WarrantiesScreen() {
       setAddingToGrocery(warrantyId);
       await addToGroceryList(warrantyId);
       Alert.alert(
-        'Success',
-        'Item added to grocery list',
+        t('success'),
+        t('addedToGroceryList'),
         [
           {
-            text: 'View List',
+            text: t('viewList'),
             onPress: () => router.push('/groceries'),
             style: 'default',
           },
           {
-            text: 'OK',
+            text: t('ok'),
             style: 'cancel',
           },
         ]
       );
     } catch (error) {
-      Alert.alert('Error', 'Failed to add item to grocery list');
+      Alert.alert(t('error'), t('failedToAddToGroceryList'));
     } finally {
       setAddingToGrocery(null);
     }
@@ -106,11 +107,11 @@ export default function WarrantiesScreen() {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays <= 0) {
-      return { type: 'expired', text: 'Expired' };
+      return { type: 'expired', text: t('expired') };
     } else if (diffDays <= 30) {
-      return { type: 'expiring', text: `Expires in ${formatDistanceToNow(expiry)}` };
+      return { type: 'expiring', text: t('expiresIn', { time: formatDistanceToNow(expiry) }) };
     } else {
-      return { type: 'valid', text: `Expires: ${formatDate(expiry)}` };
+      return { type: 'valid', text: `${t('valid')}: ${formatDate(expiry)}` };
     }
   };
 
@@ -160,6 +161,7 @@ export default function WarrantiesScreen() {
               style={[
                 styles.addToGroceryButton,
                 addingToGrocery === item.id && styles.addingToGroceryButton
+              
               ]}
               onPress={() => handleAddToGroceries(item.id)}
               disabled={addingToGrocery === item.id}
@@ -169,7 +171,7 @@ export default function WarrantiesScreen() {
               ) : (
                 <>
                   <ShoppingCart size={16} color="#4361ee" />
-                  <Text style={styles.addToGroceryText}>Add to Groceries</Text>
+                  <Text style={styles.addToGroceryText}>{t('addToGroceryList')}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -182,7 +184,7 @@ export default function WarrantiesScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>My Warranties</Text>
+        <Text style={styles.title}>{t('myWarranties')}</Text>
       </View>
 
       <View style={styles.searchContainer}>
@@ -190,7 +192,7 @@ export default function WarrantiesScreen() {
           <Search size={20} color="#6c757d" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search warranties..."
+            placeholder={t('searchWarranties')}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -209,7 +211,7 @@ export default function WarrantiesScreen() {
               sortBy === 'date' && styles.activeFilterText,
             ]}
           >
-            Recent
+            {t('recent')}
           </Text>
         </TouchableOpacity>
 
@@ -224,7 +226,7 @@ export default function WarrantiesScreen() {
               sortBy === 'name' && styles.activeFilterText,
             ]}
           >
-            Name
+            {t('name')}
           </Text>
         </TouchableOpacity>
 
@@ -239,7 +241,7 @@ export default function WarrantiesScreen() {
               sortBy === 'expiry' && styles.activeFilterText,
             ]}
           >
-            Expiry
+            {t('expiry')}
           </Text>
         </TouchableOpacity>
 
@@ -254,7 +256,7 @@ export default function WarrantiesScreen() {
               filterExpiring && styles.activeFilterText,
             ]}
           >
-            Expiring
+            {t('expiring')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -272,17 +274,17 @@ export default function WarrantiesScreen() {
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
               {searchQuery
-                ? "No warranties match your search"
+                ? t('noWarrantiesMatch')
                 : filterExpiring
-                ? "No warranties expiring soon"
-                : "No warranties added yet"}
+                ? t('noWarrantiesExpiring')
+                : t('noWarrantiesAdded')}
             </Text>
             {!searchQuery && !filterExpiring && (
               <TouchableOpacity
                 style={styles.addButton}
                 onPress={() => router.push('/scan')}
               >
-                <Text style={styles.addButtonText}>Add Warranty</Text>
+                <Text style={styles.addButtonText}>{t('addFirstWarranty')}</Text>
               </TouchableOpacity>
             )}
           </View>

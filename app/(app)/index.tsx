@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell, Clock, Search, ShieldCheck } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useAuth } from '../../context/AuthContext';
+import { t } from '../../utils/i18n';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -73,8 +74,8 @@ export default function HomeScreen() {
       >
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Hello,</Text>
-            <Text style={styles.userName}>{user?.name || 'Guest'}</Text>
+            <Text style={styles.greeting}>{t('hello')},</Text>
+            <Text style={styles.userName}>{user?.name || t('guestUser')}</Text>
           </View>
           <TouchableOpacity style={styles.searchButton}>
             <Search size={24} color="#4361ee" />
@@ -90,7 +91,7 @@ export default function HomeScreen() {
               <ShieldCheck size={24} color="#4361ee" />
             </View>
             <Text style={styles.statValue}>{warranties.length}</Text>
-            <Text style={styles.statLabel}>Total Warranties</Text>
+            <Text style={styles.statLabel}>{t('totalWarranties')}</Text>
           </View>
 
           <View style={styles.statCard}>
@@ -98,15 +99,15 @@ export default function HomeScreen() {
               <Bell size={24} color="#ff9800" />
             </View>
             <Text style={styles.statValue}>{expiringWarranties.length}</Text>
-            <Text style={styles.statLabel}>Expiring Soon</Text>
+            <Text style={styles.statLabel}>{t('expiringSoon')}</Text>
           </View>
         </Animated.View>
 
         <Animated.View entering={FadeInRight.duration(800).delay(400)}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Expiring Soon</Text>
+            <Text style={styles.sectionTitle}>{t('expiringSoon')}</Text>
             <TouchableOpacity onPress={() => router.push('/warranties')}>
-              <Text style={styles.seeAllText}>See All</Text>
+              <Text style={styles.seeAllText}>{t('seeAll')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -136,7 +137,7 @@ export default function HomeScreen() {
                     <View style={styles.expiringCardFooter}>
                       <Clock size={14} color="#dc3545" />
                       <Text style={styles.expiringCardDate}>
-                        Expires in {warranty.expiryDate ? formatDistanceToNow(new Date(warranty.expiryDate)) : 'N/A'}
+                        {t('expiresIn', { time: warranty.expiryDate ? formatDistanceToNow(new Date(warranty.expiryDate)) : t('notAvailable') })}
                       </Text>
                     </View>
                   </View>
@@ -144,7 +145,7 @@ export default function HomeScreen() {
               ))
             ) : (
               <View style={styles.emptyStateContainer}>
-                <Text style={styles.emptyStateText}>No warranties expiring soon</Text>
+                <Text style={styles.emptyStateText}>{t('noWarrantiesExpiringSoon')}</Text>
               </View>
             )}
           </ScrollView>
@@ -152,9 +153,9 @@ export default function HomeScreen() {
 
         <Animated.View entering={FadeInRight.duration(800).delay(600)}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recently Added</Text>
+            <Text style={styles.sectionTitle}>{t('recentlyAdded')}</Text>
             <TouchableOpacity onPress={() => router.push('/warranties')}>
-              <Text style={styles.seeAllText}>See All</Text>
+              <Text style={styles.seeAllText}>{t('seeAll')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -178,7 +179,7 @@ export default function HomeScreen() {
                   </Text>
                   <View style={styles.recentCardFooter}>
                     <Text style={styles.recentCardDate}>
-                      Added {formatDistanceToNow(new Date(warranty.createdAt))} ago
+                      {t('addedAgo', { time: formatDistanceToNow(new Date(warranty.createdAt)) })}
                     </Text>
                   </View>
                 </View>
@@ -186,7 +187,7 @@ export default function HomeScreen() {
             ))
           ) : (
             <View style={styles.emptyStateContainer}>
-              <Text style={styles.emptyStateText}>No recently added warranties</Text>
+              <Text style={styles.emptyStateText}>{t('noRecentlyAddedWarranties')}</Text>
             </View>
           )}
         </Animated.View>
