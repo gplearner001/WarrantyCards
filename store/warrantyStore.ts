@@ -14,6 +14,7 @@ export type Warranty = {
   receiptImage?: string | null;
   productImage?: string | null;
   createdAt: string;
+  notificationDays?: number;
 };
 
 interface APIWarranty {
@@ -160,10 +161,8 @@ export const useWarrantyStore = create<WarrantyState>((set, get) => ({
         await checkAndScheduleWarrantyNotifications(updatedWarranties);
       }
 
-      // Check rating status directly from the API
       try {
         const response = await ratingApi.getRatingStatus();
-        // If response has rating_id, it means user has already rated
         return !response || !response.rating_id;
       } catch (error) {
         console.error('Error checking rating status:', error);

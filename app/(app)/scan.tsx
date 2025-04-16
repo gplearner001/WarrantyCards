@@ -20,7 +20,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useWarrantyStore } from '../../store/warrantyStore';
 import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimated';
-import { Camera as CameraIcon, Image as ImageIcon, QrCode, X, Check, ArrowLeft, Building2, ShoppingBag, Clock, Info, Loader as Loader2, Calendar } from 'lucide-react-native';
+import { Camera as CameraIcon, Image as ImageIcon, QrCode, X, Check, ArrowLeft, Building2, ShoppingBag, Clock, Info, Loader as Loader2, Calendar, Bell } from 'lucide-react-native';
 import { performOcr, ExtractedWarrantyData } from '../../utils/ocrUtils';
 import { formatDate } from '../../utils/dateUtils';
 import { useRatingStore } from '../../store/ratingStore';
@@ -43,6 +43,7 @@ export default function ScanScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const [notificationDays, setNotificationDays] = useState<string>('');
   
   // Form data
   const [productName, setProductName] = useState('');
@@ -154,7 +155,7 @@ export default function ScanScreen() {
           processReceiptImage(manipResult.uri);
         } else if (scanMode === 'product') {
           setProductImage(manipResult.uri);
-          setValidationError(null); // Clear validation error when product image is added
+          setValidationError(null);
           setIsCameraActive(false);
         }
       } catch (error) {
@@ -184,7 +185,7 @@ export default function ScanScreen() {
           processReceiptImage(manipResult.uri);
         } else {
           setProductImage(manipResult.uri);
-          setValidationError(null); // Clear validation error when product image is added
+          setValidationError(null);
         }
       }
     } catch (error) {
@@ -245,6 +246,7 @@ export default function ScanScreen() {
         receiptImage: capturedImage || undefined,
         productImage,
         createdAt: new Date().toISOString(),
+        notificationDays: parseInt(notificationDays, 10),
       };
       
       const shouldShowRating = await addWarranty(newWarranty);
@@ -270,6 +272,7 @@ export default function ScanScreen() {
     setExpiryDate(null);
     setAdditionalInfo('');
     setValidationError(null);
+    setNotificationDays('');
   };
 
   const startCamera = (mode: 'receipt' | 'product' | 'qr') => {
@@ -526,6 +529,26 @@ export default function ScanScreen() {
                       </Text>
                     </View>
                   </TouchableOpacity>
+
+                  <View style={styles.inputGroup}>
+                    <View style={styles.inputIcon}>
+                      <Bell size={20} color="#4361ee" />
+                    </View>
+                    <TextInput
+                      style={[styles.input, !notificationDays && styles.inputPlaceholder]}
+                      placeholder="Notification days before expiry"
+                      placeholderTextColor="#adb5bd"
+                      value={notificationDays}
+                      onChangeText={(text) => {
+                        const numValue = text.replace(/[^0-9]/g, '');
+                        setNotificationDays(numValue);
+                      }}
+                      keyboardType="numeric"
+                    />
+                  </View>
+                  <Text style={styles.helperText}>
+                    Enter how many days before expiry you want to be notified. For perishable items like groceries, you might want to set this to 1-2 days. For longer-term warranties, consider 7-30 days for advance notice.
+                  </Text>
 
                   {showDatePicker && (
                     <View style={styles.datePickerContainer}>
@@ -885,7 +908,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    
     backgroundColor: '#fff1f1',
     borderRadius: 8,
     padding: 16,
@@ -972,5 +994,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 16,
     textAlign: 'center',
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#6c757d',
+    marginTop: -12,
+    marginBottom: 16,
+    marginHorizontal: 16,
+    fontStyle: 'italic',
   },
 });
