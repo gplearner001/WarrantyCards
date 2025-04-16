@@ -54,6 +54,11 @@ interface Rating {
   updated_at: string;
 }
 
+interface AppVersionResponse {
+  version: string;
+  timestamp: string;
+}
+
 // Storage implementation
 const storage = {
   getItem: async (key: string): Promise<string | null> => {
@@ -259,5 +264,11 @@ export const groceryApi = {
     return apiRequest(`/api/groceries?groceryId=${groceryId}`, {
       method: 'DELETE'
     });
+  }
+};
+
+export const appApi = {
+  async getVersion(): Promise<AppVersionResponse> {
+    return apiRequest('/api/appversion');
   }
 };

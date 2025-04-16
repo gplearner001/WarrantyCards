@@ -8,6 +8,8 @@ import * as Notifications from 'expo-notifications';
 import { setupNotifications, requestNotificationPermissions, scheduleDailyWarrantyCheck } from '../utils/notificationUtils';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { useLanguageStore } from '../utils/i18n';
+import { useAppVersion } from '../hooks/useAppVersion';
+import ForceUpgradeModal from '../components/ForceUpgradeModal';
 
 declare global {
   interface Window {
@@ -18,6 +20,7 @@ declare global {
 export default function RootLayout() {
   useFrameworkReady();
   const { initialize } = useLanguageStore();
+  const { needsUpgrade, currentVersion, requiredVersion } = useAppVersion();
 
   useEffect(() => {
     // Initialize language settings
@@ -46,6 +49,11 @@ export default function RootLayout() {
           <Stack.Screen name="+not-found" options={{ title: 'Oops!' }} />
         </Stack>
         <StatusBar style="dark" />
+        <ForceUpgradeModal
+          isVisible={needsUpgrade}
+          currentVersion={currentVersion}
+          requiredVersion={requiredVersion || ''}
+        />
       </AuthProvider>
     </GestureHandlerRootView>
   );
