@@ -8,21 +8,26 @@ import {
   Image,
   TextInput,
   RefreshControl,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWarrantyStore } from '../../store/warrantyStore';
+import { useGroceryStore } from '../../store/groceryStore';
 import { formatDistanceToNow, formatDate } from '../../utils/dateUtils';
-import { Clock, Filter, Search, Dessert as SortDesc } from 'lucide-react-native';
+import { Clock, Filter, Search, Dessert as SortDesc, ShoppingCart } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function WarrantiesScreen() {
   const router = useRouter();
   const { warranties, fetchWarranties, isLoading } = useWarrantyStore();
+  const { addToGroceryList } = useGroceryStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'expiry'>('date');
   const [filterExpiring, setFilterExpiring] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [addingToGrocery, setAddingToGrocery] = useState<string | null>(null);
 
   useEffect(() => {
     fetchWarranties();
@@ -33,6 +38,32 @@ export default function WarrantiesScreen() {
     await fetchWarranties();
     setRefreshing(false);
   }, [fetchWarranties]);
+
+  const handleAddToGroceries = async (warrantyId: string) => {
+    try {
+      setAddingToGrocery(warrantyId);
+      await addToGroceryList(warrantyId);
+      Alert.alert(
+        'Success',
+        'Item added to grocery list',
+        [
+          {
+            text: 'View List',
+            onPress: () => router.push('/groceries'),
+            style: 'default',
+          },
+          {
+            text: 'OK',
+            style: 'cancel',
+          },
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to add item to grocery list');
+    } finally {
+      setAddingToGrocery(null);
+    }
+  };
 
   // Filter warranties based on search query and expiring filter
   const filteredWarranties = warranties.filter(warranty => {
@@ -125,6 +156,23 @@ export default function WarrantiesScreen() {
                 </Text>
               </View>
             )}
+            <TouchableOpacity
+              style={[
+                styles.addToGroceryButton,
+                addingToGrocery === item.id && styles.addingToGroceryButton
+              ]}
+              onPress={() => handleAddToGroceries(item.id)}
+              disabled={addingToGrocery === item.id}
+            >
+              {addingToGrocery === item.id ? (
+                <ActivityIndicator size="small" color="#4361ee" />
+              ) : (
+                <>
+                  <ShoppingCart size={16} color="#4361ee" />
+                  <Text style={styles.addToGroceryText}>Add to Groceries</Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Animated.View>
@@ -337,7 +385,6 @@ const styles = StyleSheet.create({
   warrantyContent: {
     flex: 1,
     padding: 16,
-    justifyContent: 'center',
   },
   warrantyTitle: {
     fontSize: 16,
@@ -353,6 +400,7 @@ const styles = StyleSheet.create({
   expiryContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 12,
   },
   warrantyExpiry: {
     fontSize: 12,
@@ -366,6 +414,24 @@ const styles = StyleSheet.create({
   expiredText: {
     color: '#dc3545',
     fontWeight: '500',
+  },
+  addToGroceryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e9efff',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignSelf: 'flex-start',
+  },
+  addingToGroceryButton: {
+    opacity: 0.7,
+  },
+  addToGroceryText: {
+    color: '#4361ee',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 6,
   },
   emptyContainer: {
     alignItems: 'center',
