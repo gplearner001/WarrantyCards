@@ -5,8 +5,9 @@ import { AuthProvider } from '../context/AuthContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { setupNotifications, requestNotificationPermissions, scheduleDailyWarrantyCheck } from '../utils/notificationUtils'
+import { setupNotifications, requestNotificationPermissions, scheduleDailyWarrantyCheck } from '../utils/notificationUtils';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
+import { useLanguageStore } from '../utils/i18n';
 
 declare global {
   interface Window {
@@ -16,7 +17,12 @@ declare global {
 
 export default function RootLayout() {
   useFrameworkReady();
+  const { initialize } = useLanguageStore();
+
   useEffect(() => {
+    // Initialize language settings
+    initialize();
+
     if (Platform.OS === 'web') {
       window.frameworkReady?.();
     } else {

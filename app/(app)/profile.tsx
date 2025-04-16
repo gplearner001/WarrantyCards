@@ -11,17 +11,21 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
-import { Bell, CreditCard, CircleHelp as HelpCircle, LogOut, Settings, Shield, Star, User } from 'lucide-react-native';
+import { Bell, CreditCard, CircleHelp as HelpCircle, LogOut, Settings, Shield, Star, User, Globe as Globe2 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRatingStore } from '../../store/ratingStore';
 import RatingModal from '../../components/RatingModal';
+import LanguageSelector from '../../components/LanguageSelector';
+import { useLanguageStore, t } from '../../utils/i18n';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { logout, isSubscribed, toggleSubscription, user } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
   const [showRatingModal, setShowRatingModal] = React.useState(false);
+  const [showLanguageModal, setShowLanguageModal] = React.useState(false);
   const { checkRatingStatus } = useRatingStore();
+  const { language } = useLanguageStore();
 
   useEffect(() => {
     checkRatingStatus();
@@ -29,12 +33,12 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
+      t('logout'),
+      t('logoutConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Logout',
+          text: t('logout'),
           onPress: async () => {
             await logout();
             router.replace('/(auth)/login');
@@ -51,24 +55,24 @@ export default function ProfileScreen() {
   const handleSubscriptionToggle = () => {
     if (!isSubscribed) {
       Alert.alert(
-        'Upgrade to Premium',
-        'Get expiry notifications and more features for just $4.99/month',
+        t('upgradeToPremium'),
+        t('premiumFeatures'),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('cancel'), style: 'cancel' },
           {
-            text: 'Subscribe',
+            text: t('subscribe'),
             onPress: () => toggleSubscription(),
           },
         ]
       );
     } else {
       Alert.alert(
-        'Cancel Subscription',
-        'Are you sure you want to cancel your premium subscription?',
+        t('cancelSubscription'),
+        t('cancelSubscriptionConfirm'),
         [
-          { text: 'Keep Subscription', style: 'cancel' },
+          { text: t('keepSubscription'), style: 'cancel' },
           {
-            text: 'Cancel Subscription',
+            text: t('cancelSubscription'),
             style: 'destructive',
             onPress: () => toggleSubscription(),
           },
@@ -80,7 +84,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
+        <Text style={styles.title}>{t('profile')}</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -89,29 +93,29 @@ export default function ProfileScreen() {
             <User size={40} color="#4361ee" />
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{user?.name || 'Guest User'}</Text>
+            <Text style={styles.profileName}>{user?.name || t('guestUser')}</Text>
             <Text style={styles.profileEmail}>{user?.email || 'guest@example.com'}</Text>
           </View>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.duration(800).delay(300)}>
-          <Text style={styles.sectionTitle}>Subscription</Text>
+          <Text style={styles.sectionTitle}>{t('subscription')}</Text>
           <View style={styles.settingsCard}>
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
                 <CreditCard size={22} color="#4361ee" style={styles.settingIcon} />
-                <Text style={styles.settingLabel}>Premium Subscription</Text>
+                <Text style={styles.settingLabel}>{t('premiumSubscription')}</Text>
               </View>
               <View style={styles.subscriptionContainer}>
                 <Text style={[styles.subscriptionStatus, isSubscribed ? styles.activeSubscription : styles.inactiveSubscription]}>
-                  {isSubscribed ? 'Active' : 'Inactive'}
+                  {isSubscribed ? t('active') : t('inactive')}
                 </Text>
                 <TouchableOpacity
                   style={[styles.subscriptionButton, isSubscribed ? styles.cancelButton : styles.upgradeButton]}
                   onPress={handleSubscriptionToggle}
                 >
-                  <Text style={[styles.subscriptionButton, isSubscribed ? styles.cancelButtonText : styles.upgradeButtonText]}>
-                    {isSubscribed ? 'Cancel' : 'Upgrade'}
+                  <Text style={[styles.subscriptionButtonText, isSubscribed ? styles.cancelButtonText : styles.upgradeButtonText]}>
+                    {isSubscribed ? t('cancel') : t('upgrade')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -120,12 +124,12 @@ export default function ProfileScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.duration(800).delay(400)}>
-          <Text style={styles.sectionTitle}>Settings</Text>
+          <Text style={styles.sectionTitle}>{t('settings')}</Text>
           <View style={styles.settingsCard}>
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
                 <Bell size={22} color="#4361ee" style={styles.settingIcon} />
-                <Text style={styles.settingLabel}>Notifications</Text>
+                <Text style={styles.settingLabel}>{t('notifications')}</Text>
               </View>
               <Switch
                 value={notificationsEnabled}
@@ -134,11 +138,24 @@ export default function ProfileScreen() {
                 thumbColor={notificationsEnabled ? '#4361ee' : '#f4f3f4'}
               />
             </View>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity 
+              style={styles.settingRow}
+              onPress={() => setShowLanguageModal(true)}
+            >
+              <View style={styles.settingLabelContainer}>
+                <Globe2 size={22} color="#4361ee" style={styles.settingIcon} />
+                <Text style={styles.settingLabel}>{t('language')}</Text>
+              </View>
+              <Text style={styles.languageValue}>{t('language')}</Text>
+            </TouchableOpacity>
           </View>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.duration(800).delay(500)}>
-          <Text style={styles.sectionTitle}>Support</Text>
+          <Text style={styles.sectionTitle}>{t('support')}</Text>
           <View style={styles.settingsCard}>
             <TouchableOpacity 
               style={styles.settingRow}
@@ -146,7 +163,7 @@ export default function ProfileScreen() {
             >
               <View style={styles.settingLabelContainer}>
                 <Star size={22} color="#4361ee" style={styles.settingIcon} />
-                <Text style={styles.settingLabel}>Rate & Feedback</Text>
+                <Text style={styles.settingLabel}>{t('rateAndFeedback')}</Text>
               </View>
             </TouchableOpacity>
 
@@ -155,7 +172,7 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
                 <HelpCircle size={22} color="#4361ee" style={styles.settingIcon} />
-                <Text style={styles.settingLabel}>Help & Support</Text>
+                <Text style={styles.settingLabel}>{t('helpAndSupport')}</Text>
               </View>
             </TouchableOpacity>
 
@@ -164,7 +181,7 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
                 <Shield size={22} color="#4361ee" style={styles.settingIcon} />
-                <Text style={styles.settingLabel}>Privacy Policy</Text>
+                <Text style={styles.settingLabel}>{t('privacyPolicy')}</Text>
               </View>
             </TouchableOpacity>
 
@@ -173,7 +190,7 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
                 <Settings size={22} color="#4361ee" style={styles.settingIcon} />
-                <Text style={styles.settingLabel}>App Settings</Text>
+                <Text style={styles.settingLabel}>{t('appSettings')}</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -182,7 +199,7 @@ export default function ProfileScreen() {
         <Animated.View entering={FadeInDown.duration(800).delay(600)} style={styles.logoutContainer}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <LogOut size={22} color="#dc3545" style={styles.logoutIcon} />
-            <Text style={styles.logoutText}>Logout</Text>
+            <Text style={styles.logoutText}>{t('logout')}</Text>
           </TouchableOpacity>
         </Animated.View>
 
@@ -194,6 +211,11 @@ export default function ProfileScreen() {
       <RatingModal
         isVisible={showRatingModal}
         onClose={() => setShowRatingModal(false)}
+      />
+
+      <LanguageSelector
+        isVisible={showLanguageModal}
+        onClose={() => setShowLanguageModal(false)}
       />
     </SafeAreaView>
   );
@@ -314,15 +336,15 @@ const styles = StyleSheet.create({
   cancelButton: {
     backgroundColor: '#fff5f5',
   },
-  upgradeButtonText: {
-    color: '#4361ee',
+  subscriptionButtonText: {
     fontSize: 14,
     fontWeight: '600',
   },
+  upgradeButtonText: {
+    color: '#4361ee',
+  },
   cancelButtonText: {
     color: '#dc3545',
-    fontSize: 14,
-    fontWeight: '600',
   },
   logoutContainer: {
     marginHorizontal: 20,
@@ -351,5 +373,10 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 14,
     color: '#6c757d',
+  },
+  languageValue: {
+    fontSize: 14,
+    color: '#4361ee',
+    fontWeight: '500',
   },
 });

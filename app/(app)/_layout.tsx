@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Chrome as Home, CirclePlus as PlusCircle, Receipt, Settings, User, ShoppingCart } from 'lucide-react-native';
 import Constants from 'expo-constants';
+import { t } from '../../utils/i18n';
 
 export default function AppLayout() {
   return (
@@ -23,35 +24,35 @@ export default function AppLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('home'),
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="scan"
         options={{
-          title: 'Add',
+          title: t('scan'),
           tabBarIcon: ({ color, size }) => <PlusCircle size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="warranties"
         options={{
-          title: 'Warranties',
+          title: t('warranties'),
           tabBarIcon: ({ color, size }) => <Receipt size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="groceries"
         options={{
-          title: 'Groceries',
+          title: t('groceries'),
           tabBarIcon: ({ color, size }) => <ShoppingCart size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: t('profile'),
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />

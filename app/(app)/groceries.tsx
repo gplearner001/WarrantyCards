@@ -15,6 +15,7 @@ import { useGroceryStore } from '../../store/groceryStore';
 import { formatDate } from '../../utils/dateUtils';
 import { ShoppingCart, Trash2 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { t } from '../../utils/i18n';
 
 export default function GroceriesScreen() {
   const router = useRouter();
@@ -38,20 +39,19 @@ export default function GroceriesScreen() {
     }
 
     Alert.alert(
-      'Remove from Grocery List',
-      'Are you sure you want to remove this item from your grocery list?',
+      t('removeFromGroceryList'),
+      t('removeFromGroceryListConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('remove'),
           style: 'destructive',
           onPress: async () => {
             try {
               await removeFromGroceryList(groceryId);
-              // After successful deletion, refresh the groceries list
               await fetchGroceries();
             } catch (error) {
-              Alert.alert('Error', 'Failed to remove item from grocery list');
+              Alert.alert(t('error'), t('failedToRemoveFromGroceryList'));
             }
           },
         },
@@ -89,7 +89,7 @@ export default function GroceriesScreen() {
             )}
             <View style={styles.groceryFooter}>
               <Text style={styles.groceryQuantity}>
-                Quantity: {item.quantity}
+                {t('quantity')}: {item.quantity}
               </Text>
               <TouchableOpacity
                 style={styles.deleteButton}
@@ -107,7 +107,7 @@ export default function GroceriesScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Grocery List</Text>
+        <Text style={styles.title}>{t('groceryList')}</Text>
       </View>
 
       <FlatList
@@ -122,9 +122,9 @@ export default function GroceriesScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <ShoppingCart size={64} color="#6c757d" style={styles.emptyIcon} />
-            <Text style={styles.emptyText}>No items in your grocery list</Text>
+            <Text style={styles.emptyText}>{t('noItemsInGroceryList')}</Text>
             <Text style={styles.emptySubtext}>
-              Add items from your warranties to create your shopping list
+              {t('addItemsFromWarranties')}
             </Text>
           </View>
         }
