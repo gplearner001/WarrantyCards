@@ -230,6 +230,18 @@ export default function ScanScreen() {
     return true;
   };
 
+  const resetForm = () => {
+    setProductName('');
+    setCompany('');
+    setExpiryDate(null);
+    setAdditionalInfo('');
+    setNotificationDays('');
+    setCapturedImage(null);
+    setProductImage(null);
+    setScanned(false);
+    lastScannedBarcode.current = null;
+  };
+
   const saveWarranty = async () => {
     if (!validateForm()) {
       return;
@@ -250,6 +262,13 @@ export default function ScanScreen() {
       };
       
       const shouldShowRating = await addWarranty(newWarranty);
+      
+      // Reset form after successful save
+      resetForm();
+      setCapturedImage(null);
+      setProductImage(null);
+      setScanned(false);
+      lastScannedBarcode.current = null;
      
       if (shouldShowRating) {
         setShowRatingModal(true);
@@ -262,17 +281,6 @@ export default function ScanScreen() {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const resetForm = () => {
-    setCapturedImage(null);
-    setProductImage(null);
-    setProductName('');
-    setCompany('');
-    setExpiryDate(null);
-    setAdditionalInfo('');
-    setValidationError(null);
-    setNotificationDays('');
   };
 
   const startCamera = (mode: 'receipt' | 'product' | 'qr') => {

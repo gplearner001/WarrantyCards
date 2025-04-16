@@ -3,6 +3,8 @@ import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import * as FileSystem from 'expo-file-system';
 import { Warranty } from '../store/warrantyStore';
+import { formatDate } from './dateUtils';
+
 
 // Storage implementation for web and native platforms
 const storage = {
