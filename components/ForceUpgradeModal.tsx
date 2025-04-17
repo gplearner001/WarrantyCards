@@ -14,24 +14,37 @@ interface ForceUpgradeModalProps {
   isVisible: boolean;
   currentVersion: string;
   requiredVersion: string;
+  storeUrls?: {
+    appstore: string;
+    playstore: string;
+  };
 }
 
 export default function ForceUpgradeModal({
   isVisible,
   currentVersion,
   requiredVersion,
+  storeUrls,
 }: ForceUpgradeModalProps) {
   const handleUpdate = async () => {
-    // For testing, we'll use a direct download link
-    // In production, this would be the App Store/Play Store link
     const storeUrl = Platform.select({
-      ios: 'https://google.com',
-      android: 'https://play.google.com/store/apps/details?id=your.app.id',
-      default: 'https://example.com/app-download', // Test download URL
+      ios: storeUrls?.appstore,
+      android: storeUrls?.playstore,
+      default: storeUrls?.playstore, // Default to Play Store URL for web
     });
 
+    if (!storeUrl) {
+      console.error('No store URL available for platform');
+      return;
+    }
+
     try {
-      await Linking.openURL(storeUrl);
+      const canOpen = await Linking.canOpenURL(storeUrl);
+      if (canOpen) {
+        await Linking.openURL(storeUrl);
+      } else {
+        console.error('Cannot open store URL:', storeUrl);
+      }
     } catch (error) {
       console.error('Error opening store URL:', error);
     }

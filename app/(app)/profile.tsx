@@ -17,6 +17,7 @@ import { useRatingStore } from '../../store/ratingStore';
 import RatingModal from '../../components/RatingModal';
 import LanguageSelector from '../../components/LanguageSelector';
 import { useLanguageStore, t } from '../../utils/i18n';
+import Constants from 'expo-constants';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -204,7 +205,7 @@ export default function ProfileScreen() {
         </Animated.View>
 
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>TrackMyExpiry v1.0.0</Text>
+          <Text style={styles.versionText}>TrackMyExpiry v{Constants.expoConfig?.version}</Text>
         </View>
       </ScrollView>
 

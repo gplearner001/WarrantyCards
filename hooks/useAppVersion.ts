@@ -3,9 +3,19 @@ import { AppState, AppStateStatus, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import { appApi } from '../utils/api';
 
+interface VersionInfo {
+  version: string;
+  appstoreurl: string;
+  playstoreurl: string;
+}
+
 export function useAppVersion() {
   const [needsUpgrade, setNeedsUpgrade] = useState(false);
   const [requiredVersion, setRequiredVersion] = useState<string | null>(null);
+  const [storeUrls, setStoreUrls] = useState<{ appstore: string; playstore: string }>({
+    appstore: '',
+    playstore: ''
+  });
   const [isChecking, setIsChecking] = useState(true);
 
   const currentVersion = Constants.expoConfig?.version || '1.0.0';
@@ -24,8 +34,12 @@ export function useAppVersion() {
   const checkVersion = async () => {
     try {
       setIsChecking(true);
-      const { version } = await appApi.getVersion();
+      const { version, appstoreurl, playstoreurl } = await appApi.getVersion();
       setRequiredVersion(version);
+      setStoreUrls({
+        appstore: appstoreurl,
+        playstore: playstoreurl
+      });
       
       const needsUpdate = compareVersions(currentVersion, version) < 0;
       setNeedsUpgrade(needsUpdate);
@@ -55,6 +69,7 @@ export function useAppVersion() {
     needsUpgrade,
     currentVersion,
     requiredVersion,
+    storeUrls,
     isChecking,
   };
 }

@@ -57,6 +57,8 @@ interface Rating {
 interface AppVersionResponse {
   version: string;
   timestamp: string;
+  appstoreurl: string;
+  playstoreurl: string;
 }
 
 // Storage implementation

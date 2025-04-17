@@ -20,7 +20,7 @@ declare global {
 export default function RootLayout() {
   useFrameworkReady();
   const { initialize } = useLanguageStore();
-  const { needsUpgrade, currentVersion, requiredVersion } = useAppVersion();
+  const { needsUpgrade, currentVersion, requiredVersion, storeUrls } = useAppVersion();
 
   useEffect(() => {
     // Initialize language settings
@@ -53,6 +53,7 @@ export default function RootLayout() {
           isVisible={needsUpgrade}
           currentVersion={currentVersion}
           requiredVersion={requiredVersion || ''}
+          storeUrls={storeUrls}
         />
       </AuthProvider>
     </GestureHandlerRootView>
