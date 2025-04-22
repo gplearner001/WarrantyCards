@@ -89,6 +89,7 @@ const translations = {
     notificationDays: 'Notification days before expiry',
     notificationDaysHelper: 'Enter how many days before expiry you want to be notified. For perishable items like groceries, you might want to set this to 1-2 days. For longer-term warranties, consider 7-30 days for advance notice.',
     selectExpiryDate: 'Select Expiry Date',
+    scanExpiryDateHelper: 'You can scan the expiry date directly from the product packaging or receipt using the camera icon.',
     resetForm: 'Reset Form',
     saveWarranty: 'Save Warranty',
     savingWarranty: 'Saving...',

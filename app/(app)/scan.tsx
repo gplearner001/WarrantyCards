@@ -21,8 +21,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useWarrantyStore } from '../../store/warrantyStore';
 import { formatDate } from '../../utils/dateUtils';
 import { Camera as CameraIcon, Image as ImageIcon, QrCode, X, Check, ArrowLeft, Building2, ShoppingBag, Clock, Info, Loader as Loader2, Calendar, Bell } from 'lucide-react-native';
-import Animated, { FadeIn, FadeInDown, FadeInRight } from 'react-native-reanimated';
-import { performOcr, ExtractedWarrantyData } from '../../utils/ocrUtils';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { performOcr } from '../../utils/ocrUtils';
 import { useRatingStore } from '../../store/ratingStore';
 import RatingModal from '../../components/RatingModal';
 import { t } from '../../utils/i18n';
@@ -35,11 +35,12 @@ export default function ScanScreen() {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [scanMode, setScanMode] = useState<'receipt' | 'product' | 'qr'>('receipt');
+  const [scanMode, setScanMode] = useState<'receipt' | 'product' | 'qr' | 'expiry'>('receipt');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [productImage, setProductImage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isProcessingBarcode, setIsProcessingBarcode] = useState(false);
+  const [isProcessingExpiryDate, setIsProcessingExpiryDate] = useState(false);
   const lastScannedBarcode = useRef<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -78,6 +79,60 @@ export default function ScanScreen() {
 
   const hideDatePicker = () => {
     setShowDatePicker(false);
+  };
+
+  const handleExpiryDateScan = async () => {
+    if (!cameraRef.current) return;
+    
+    try {
+      setIsProcessingExpiryDate(true);
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+        base64: true,
+      });
+      console.log("calling extract expiry api");
+      const response = await fetch('https://expiry-ocrapi.vercel.app/api/extract-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: photo?.base64,
+        }),
+      });
+
+      const data = await response.json();
+      console.log("expiry data:", data);
+      if (data.success && data.dates && data.dates.length > 0) {
+        // Get the latest date from the response
+        const latestDate = data.dates[data.dates.length - 1];
+        // Convert DDMMYYYY to Date object
+        const day = latestDate.substring(0, 2);
+        const month = latestDate.substring(2, 4);
+        const year = latestDate.substring(4);
+        const formattedDate = new Date(`${year}-${month}-${day}`);
+        
+        setExpiryDate(formattedDate);
+        setIsCameraActive(false);
+      } else {
+        Alert.alert(
+          'No Expiry Date Found',
+          'Could not detect expiry date. Please enter the date manually.',
+          [{ text: 'OK' }]
+        );
+        setIsCameraActive(false);
+      }
+    } catch (error) {
+      console.error('Error scanning expiry date:', error);
+      Alert.alert(
+        'Error',
+        'Failed to scan expiry date. Please enter the date manually.',
+        [{ text: 'OK' }]
+      );
+      setIsCameraActive(false);
+    } finally {
+      setIsProcessingExpiryDate(false);
+    }
   };
 
   const fetchProductInfo = async (barcode: string) => {
@@ -284,7 +339,7 @@ export default function ScanScreen() {
     }
   };
 
-  const startCamera = (mode: 'receipt' | 'product' | 'qr') => {
+  const startCamera = (mode: 'receipt' | 'product' | 'qr' | 'expiry') => {
     setScanMode(mode);
     setIsCameraActive(true);
     if (mode === 'qr') {
@@ -330,10 +385,6 @@ export default function ScanScreen() {
         <CameraView
           ref={cameraRef}
           style={styles.camera}
-          autofocus='on'
-          barcodeScannerSettings={{
-            barcodeTypes: ['qr','code128', 'code39','ean13','ean8'],
-          }}
           onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
         >
           <View style={styles.cameraOverlay}>
@@ -350,7 +401,9 @@ export default function ScanScreen() {
               </TouchableOpacity>
               <Text style={styles.cameraTitle}>
                 {scanMode === 'receipt' ? t('scanReceipt') : 
-                 scanMode === 'product' ? t('captureProduct') : t('scanBarcode')}
+                 scanMode === 'product' ? t('captureProduct') : 
+                 scanMode === 'expiry' ? t('scanExpiryDate') :
+                 t('scanBarcode')}
               </Text>
               <View style={{ width: 40 }} />
             </View>
@@ -364,18 +417,20 @@ export default function ScanScreen() {
               </View>
             )}
 
-            {isProcessingBarcode && (
+            {(isProcessingBarcode || isProcessingExpiryDate) && (
               <View style={styles.processingOverlay}>
                 <ActivityIndicator size="large" color="#ffffff" />
-                <Text style={styles.processingText}>{t('fetchingProductInfo')}</Text>
+                <Text style={styles.processingText}>
+                  {isProcessingBarcode ? t('fetchingProductInfo') : t('processingExpiryDate')}
+                </Text>
               </View>
             )}
 
             <View style={styles.cameraControls}>
               <TouchableOpacity
                 style={styles.captureButton}
-                onPress={takePicture}
-                disabled={isScanning || isProcessingBarcode}
+                onPress={scanMode === 'expiry' ? handleExpiryDateScan : takePicture}
+                disabled={isProcessingBarcode || isProcessingExpiryDate}
               >
                 <View style={styles.captureButtonInner} />
               </TouchableOpacity>
@@ -522,22 +577,35 @@ export default function ScanScreen() {
                     />
                   </View>
 
-                  <TouchableOpacity 
-                    style={styles.inputGroup}
-                    onPress={showDatePickerModal}
-                  >
+                  <View style={styles.inputGroup}>
                     <View style={styles.inputIcon}>
                       <Calendar size={20} color="#4361ee" />
                     </View>
-                    <View style={[styles.input, styles.datePickerButton]}>
+                    <TouchableOpacity 
+                      style={[styles.input, styles.datePickerButton, { flex: 1 }]}
+                      onPress={showDatePickerModal}
+                    >
                       <Text style={[
                         styles.datePickerText,
                         !expiryDate && { color: '#adb5bd' }
                       ]}>
                         {expiryDate ? formatDate(expiryDate) : t('selectExpiryDate')}
                       </Text>
-                    </View>
-                  </TouchableOpacity>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.scanExpiryButton}
+                      onPress={() => {
+                        setScanMode('expiry');
+                        setIsCameraActive(true);
+                      }}
+                    >
+                      <CameraIcon size={20} color="#4361ee" />
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={styles.helperText}>
+                    {t('scanExpiryDateHelper')}
+                  </Text>
 
                   <View style={styles.inputGroup}>
                     <View style={styles.inputIcon}>
@@ -1011,5 +1079,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     marginHorizontal: 16,
     fontStyle: 'italic',
+  },
+  scanExpiryButton: {
+    padding: 12,
+    borderLeftWidth: 1,
+    borderLeftColor: '#e9ecef',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
