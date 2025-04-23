@@ -5,7 +5,6 @@ import * as FileSystem from 'expo-file-system';
 import { Warranty } from '../store/warrantyStore';
 import { formatDate } from './dateUtils';
 
-
 // Storage implementation for web and native platforms
 const storage = {
   getItem: async (key: string): Promise<string | null> => {
@@ -56,53 +55,67 @@ export async function checkAndScheduleWarrantyNotifications(warranties: Warranty
     return;
   }
 
-  // Cancel existing warranty notifications
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  try {
+    // Cancel existing warranty notifications
+    await Notifications.cancelAllScheduledNotificationsAsync();
 
-  const now = new Date();
+    const now = new Date();
 
-  // Schedule notifications for each warranty based on custom notification days
-  warranties.forEach(async (warranty: Warranty) => {
-    if (!warranty.expiryDate) return;
+    // Schedule notifications for each warranty based on custom notification days
+    for (const warranty of warranties) {
+      if (!warranty.expiryDate) continue;
 
-    const expiryDate = new Date(warranty.expiryDate);
-    const notificationDays = warranty.notificationDays || 1; // Default to 1 day if not set
-    
-    const notificationDate = new Date(expiryDate);
-    notificationDate.setDate(notificationDate.getDate() - notificationDays); // Notify X days before expiry
-    notificationDate.setHours(7, 0, 0, 0); // At 7 AM
-    
-    // Only schedule if notification date is in the future
-    if (notificationDate > now) {
-      const imageUrl = warranty.productImage || warranty.receiptImage || 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=2070';
+      const expiryDate = new Date(warranty.expiryDate);
+      const notificationDays = warranty.notificationDays || 1; // Default to 1 day if not set
 
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: `Warranty Expiring in ${notificationDays} days: ${warranty.productName}`,
-          body: `Your ${warranty.company} ${warranty.productName} warranty will expire on ${formatDate(new Date(warranty.expiryDate))}`,
-          data: { 
-            warrantyId: warranty.id,
-            productImage: imageUrl,
-            productName: warranty.productName,
-            company: warranty.company,
-            expiryDate: warranty.expiryDate
+      // Calculate notification date based on expiry date and notification days
+      const notificationDate = new Date(expiryDate);
+      notificationDate.setDate(notificationDate.getDate() - notificationDays);
+      notificationDate.setHours(7, 0, 0, 0); // Set to 7 AM
+
+      // Only schedule if notification date is in the future
+      if (notificationDate > now) {
+        console.log(`Scheduling notification for ${warranty.productName}`);
+        console.log(`Expiry date: ${expiryDate}`);
+        console.log(`Notification date: ${notificationDate}`);
+        console.log(`Notification days: ${notificationDays}`);
+
+        const imageUrl = warranty.productImage || warranty.receiptImage || 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=2070';
+
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: `Warranty Expiring in ${notificationDays} days: ${warranty.productName}`,
+            body: `Your ${warranty.company} ${warranty.productName} warranty will expire on ${formatDate(expiryDate)}`,
+            data: { 
+              warrantyId: warranty.id,
+              productImage: imageUrl,
+              productName: warranty.productName,
+              company: warranty.company,
+              expiryDate: warranty.expiryDate
+            },
+            attachments: Platform.OS === 'ios' ? [{
+              identifier: `warranty-${warranty.id}-expiring-soon`,
+              url: imageUrl,
+              type: 'image' as const
+            }] : undefined,
+            sound: true,
+            priority: Notifications.AndroidNotificationPriority.HIGH,
+            badge: 1,
           },
-          attachments: Platform.OS === 'ios' ? [{
-            identifier: `warranty-${warranty.id}-expiring-soon`,
-            url: imageUrl,
-            type: 'image' as const
-          }] : undefined,
-          sound: true,
-          priority: Notifications.AndroidNotificationPriority.HIGH,
-          badge: 1,
-        },
-        trigger: {
-          date: notificationDate,
-          type: Notifications.SchedulableTriggerInputTypes.DATE
-        },
-      });
+          trigger: {
+            date: notificationDate,
+            type: Notifications.SchedulableTriggerInputTypes.DATE
+          },
+        });
+
+        console.log(`Notification scheduled successfully for ${warranty.productName}`);
+      } else {
+        console.log(`Skipping notification for ${warranty.productName} as notification date is in the past`);
+      }
     }
-  });
+  } catch (error) {
+    console.error('Error scheduling notifications:', error);
+  }
 }
 
 export async function requestNotificationPermissions() {
